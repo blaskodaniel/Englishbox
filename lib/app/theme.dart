@@ -38,6 +38,26 @@ abstract final class AppColors {
   static const ruleBg = Color(0xFF2A1F10);
   static const sentence = Color(0xFF4FE0B0);
   static const sentenceBg = Color(0xFF0F2A24);
+
+  // Elemtípusok halvány kerete (példakártyák, képletblokk-gomb)
+  static const wordSoft = Color(0xFF1E4266);
+  static const phraseSoft = Color(0xFF3A2F5C);
+  static const ruleSoft = Color(0xFF5A4A2E);
+  static const sentenceSoft = Color(0xFF1F5C4D);
+
+  // Nyelvtani képlet: helykitöltő blokk háttere, kulcsszó szövege
+  static const ruleSlot = Color(0xFF3A2C17);
+  static const onRule = Color(0xFF2A1A05);
+
+  // Hibás példa (✗ Wrong)
+  static const wrong = Color(0xFFFF8A7A);
+  static const wrongBg = Color(0xFF2E1714);
+  static const wrongBorder = Color(0xFF6A2E27);
+  static const wrongText = Color(0xFFE6CBC6);
+
+  // Egyéb
+  static const chipBg = Color(0xFF22262F);
+  static const dashed = Color(0xFF3A3F4E);
 }
 
 /// Sarokkerekítések.
@@ -81,7 +101,13 @@ ThemeData buildAppTheme() {
           bodySmall: const TextStyle(fontSize: 13, color: AppColors.textMuted),
           labelSmall: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
         )
-        .apply(bodyColor: AppColors.text, displayColor: AppColors.text),
+        // A copyWith-ben megadott új TextStyle-okban nincs fontFamily,
+        // ezért itt újra ráállítjuk a Lexendet az összes stílusra.
+        .apply(
+          fontFamily: 'Lexend',
+          bodyColor: AppColors.text,
+          displayColor: AppColors.text,
+        ),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.background,
       foregroundColor: AppColors.text,
@@ -110,5 +136,20 @@ ThemeData buildAppTheme() {
       ),
     ),
     dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
+    dialogTheme: DialogThemeData(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.panel),
+      ),
+    ),
+    snackBarTheme: const SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.surfaceAlt,
+      contentTextStyle: TextStyle(
+        fontFamily: 'Lexend',
+        fontSize: 15,
+        color: AppColors.text,
+      ),
+    ),
   );
 }

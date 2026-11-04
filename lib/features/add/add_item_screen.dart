@@ -1,0 +1,419 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../app/labels.dart';
+import '../../app/theme.dart';
+import '../../data/providers.dart';
+import '../../domain/drafts.dart';
+import '../../domain/enums.dart';
+import '../../domain/formula.dart';
+import '../../domain/xp.dart';
+import '../../widgets/chunky_button.dart';
+import '../../widgets/field_label.dart';
+import '../../widgets/level_picker.dart';
+import '../../widgets/screen_header.dart';
+import '../../widgets/select_chip.dart';
+import '../../widgets/text_input_dialog.dart';
+import 'example_draft.dart';
+import 'widgets/examples_editor.dart';
+import 'widgets/formula_editor.dart';
+import 'widgets/tags_source_row.dart';
+import 'widgets/type_selector.dart';
+
+/// Új elem hozzáadása: szó, kifejezés, nyelvtani szabály vagy mondat.
+///
+/// Az űrlap állapota helyi (`State`), mint egy React komponens `useState`-jei;
+/// mentéskor a repositoryn keresztül egy tranzakcióban kerül az adatbázisba.
+class AddItemScreen extends ConsumerStatefulWidget {
+  const AddItemScreen({
+    super.key,
+    this.initialType = ItemType.word,
+    this.initialText = '',
+  });
+
+  final ItemType initialType;
+
+  /// A Today gyorsrögzítő mezőjéből érkező szöveg.
+  final String initialText;
+
+  @override
+  ConsumerState<AddItemScreen> createState() => _AddItemScreenState();
+}
+
+class _AddItemScreenState extends ConsumerState<AddItemScreen> {
+  late ItemType _type = widget.initialType;
+
+  late final _english = TextEditingController(text: widget.initialText);
+  final _hungarian = TextEditingController();
+  final _notes = TextEditingController();
+  final _trapNote = TextEditingController();
+  final _newExample = TextEditingController();
+  final _newExampleSecond = TextEditingController();
+
+  PartOfSpeech? _partOfSpeech;
+  PhraseKind? _phraseKind;
+  CefrLevel? _level;
+  String? _ruleCategory;
+  List<FormulaBlock> _formula = [];
+  bool _showTrapNote = false;
+  List<ExampleDraft> _examples = [];
+  List<String> _tags = [];
+  String? _source;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // A gomb engedélyezése és az XP-előnézet a beírt szövegtől függ.
+    _english.addListener(_refresh);
+    _newExample.addListener(_refresh);
+    // Alapértelmezett szint: a felhasználó saját szintje a beállításokból.
+    ref.read(settingsRepositoryProvider).get().then((settings) {
+      if (mounted && _level == null) setState(() => _level = settings.levelNow);
+    });
+  }
+
+  void _refresh() => setState(() {});
+
+  @override
+  void dispose() {
+    for (final controller in [
+      _english,
+      _hungarian,
+      _notes,
+      _trapNote,
+      _newExample,
+      _newExampleSecond,
+    ]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  bool get _hasExamples => _type != ItemType.sentence;
+  bool get _canSave => _english.text.trim().isNotEmpty && !_saving;
+
+  /// A félig beírt (még nem hozzáadott) példát is beleszámoljuk.
+  int get _exampleCount =>
+      _examples.length + (_newExample.text.trim().isNotEmpty ? 1 : 0);
+
+  int get _xp => XpRules.forNewItem(
+        _type,
+        exampleCount: _hasExamples ? _exampleCount : 0,
+      );
+
+  void _flushPendingExample() {
+    final english = _newExample.text.trim();
+    if (english.isEmpty) return;
+    final second = _newExampleSecond.text.trim();
+    _examples = [
+      ..._examples,
+      ExampleDraft(english: english, second: second.isEmpty ? null : second),
+    ];
+    _newExample.clear();
+    _newExampleSecond.clear();
+  }
+
+  NewItem _buildDraft() {
+    final isRule = _type == ItemType.rule;
+    final examples = _hasExamples ? _examples : const <ExampleDraft>[];
+    return NewItem(
+      type: _type,
+      english: _english.text,
+      hungarian: isRule ? '' : _hungarian.text,
+      notes: _type == ItemType.phrase || isRule ? _notes.text : null,
+      partOfSpeech: _type == ItemType.word ? _partOfSpeech : null,
+      phraseKind: _type == ItemType.phrase ? _phraseKind : null,
+      level: _level,
+      source: _source,
+      ruleCategory: isRule ? _ruleCategory : null,
+      formula: isRule ? _formula : const [],
+      trapNote: isRule && _showTrapNote ? _trapNote.text : null,
+      tags: _tags,
+      examples: [
+        for (final e in examples)
+          if (e.isCorrect) NewExample(e.english, hungarian: e.second),
+      ],
+      mistakes: [
+        if (isRule)
+          for (final e in examples)
+            if (!e.isCorrect) NewMistake(e.english, explanation: e.second),
+      ],
+    );
+  }
+
+  Future<void> _save() async {
+    if (!_canSave) return;
+    final xp = _xp;
+    setState(() {
+      _saving = true;
+      _flushPendingExample();
+    });
+
+    try {
+      final id = await ref.read(itemsRepositoryProvider).createItem(_buildDraft());
+      await ref.read(xpRepositoryProvider).award(xp, XpReason.addItem, itemId: id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Saved to your box · +$xp XP')),
+      );
+      context.pushReplacement('/item/$id');
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save: $error')),
+      );
+    }
+  }
+
+  Future<void> _editRuleCategory() async {
+    final input = await showTextInputDialog(
+      context,
+      title: 'Rule group',
+      initial: _ruleCategory ?? '',
+      hint: 'e.g. Conditionals, Tenses',
+    );
+    if (input != null) setState(() => _ruleCategory = input.isEmpty ? null : input);
+  }
+
+  // ------------------------------------------------------------------ UI
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            ScreenHeader(
+              title: _type.newTitle,
+              onLeading: () => context.pop(),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 18,
+                  children: [
+                    TypeSelector(
+                      value: _type,
+                      onChanged: (type) => setState(() => _type = type),
+                    ),
+                    ..._typeSpecificFields(),
+                    if (_hasExamples)
+                      ExamplesEditor(
+                        type: _type,
+                        term: _english.text,
+                        examples: _examples,
+                        onChanged: (list) => setState(() => _examples = list),
+                        newEnglish: _newExample,
+                        newSecond: _newExampleSecond,
+                      ),
+                    LevelPicker(
+                      value: _level,
+                      onChanged: (level) => setState(() => _level = level),
+                    ),
+                    TagsSourceRow(
+                      tags: _tags,
+                      onTagsChanged: (tags) => setState(() => _tags = tags),
+                      source: _source,
+                      onSourceChanged: (source) => setState(() => _source = source),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _SaveBar(
+        label: _type == ItemType.rule ? 'Save rule' : 'Save to box',
+        xp: _xp,
+        onPressed: _canSave ? _save : null,
+      ),
+    );
+  }
+
+  List<Widget> _typeSpecificFields() {
+    return switch (_type) {
+      ItemType.word => [
+          _mainField(),
+          _labeled('Meaning in Hungarian', _textField(_hungarian, hint: 'vonakodó, kelletlen')),
+          _labeled(
+            'Part of speech',
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final pos in PartOfSpeech.values)
+                  _typeChip(pos.label, _partOfSpeech == pos,
+                      () => setState(() => _partOfSpeech = _partOfSpeech == pos ? null : pos)),
+              ],
+            ),
+          ),
+        ],
+      ItemType.phrase => [
+          _mainField(),
+          _labeled(
+            'Kind',
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final kind in PhraseKind.values)
+                  _typeChip(kind.label, _phraseKind == kind,
+                      () => setState(() => _phraseKind = _phraseKind == kind ? null : kind)),
+              ],
+            ),
+          ),
+          _labeled('Meaning in Hungarian', _textField(_hungarian, hint: 'egy hullámhosszon vagyunk')),
+          _labeled(
+            'Notes (optional)',
+            _textField(_notes, hint: 'When and how to use it…', minLines: 3, maxLines: 8),
+          ),
+        ],
+      ItemType.rule => [
+          _labeled(
+            _type.englishLabel,
+            _englishField(),
+            trailing: TextButton.icon(
+              onPressed: _editRuleCategory,
+              icon: const Icon(Icons.expand_more_rounded, size: 16),
+              iconAlignment: IconAlignment.end,
+              label: Text(_ruleCategory ?? 'Group'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.rule,
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                textStyle: const TextStyle(
+                  fontFamily: 'Lexend',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          FormulaEditor(
+            blocks: _formula,
+            onChanged: (blocks) => setState(() => _formula = blocks),
+          ),
+          _labeled(
+            'Explanation',
+            _textField(
+              _notes,
+              hint: 'When do we use it? How is it built?',
+              minLines: 6,
+              maxLines: 14,
+            ),
+          ),
+          if (_showTrapNote)
+            _labeled(
+              'Hungarian trap note',
+              _textField(_trapNote, hint: 'What do Hungarians often get wrong?', minLines: 2, maxLines: 5),
+            )
+          else
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => setState(() => _showTrapNote = true),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.rule,
+                  padding: EdgeInsets.zero,
+                  textStyle: const TextStyle(
+                    fontFamily: 'Lexend',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: const Text('+ Add a Hungarian trap note'),
+              ),
+            ),
+        ],
+      ItemType.sentence => [
+          _mainField(minLines: 2, maxLines: 4, fontSize: 18),
+          _labeled('Translation', _textField(_hungarian, hint: 'Végigvezetnél az új folyamaton?')),
+        ],
+    };
+  }
+
+  Widget _mainField({int minLines = 1, int maxLines = 1, double fontSize = 22}) =>
+      _labeled(
+        _type.englishLabel,
+        _englishField(minLines: minLines, maxLines: maxLines, fontSize: fontSize),
+      );
+
+  /// A fő angol mező – keretszíne az elemtípus színe.
+  Widget _englishField({int minLines = 1, int maxLines = 1, double fontSize = 20}) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadii.button),
+      borderSide: BorderSide(color: _type.color, width: 2),
+    );
+    return TextField(
+      controller: _english,
+      autofocus: widget.initialText.isEmpty,
+      minLines: minLines,
+      maxLines: maxLines,
+      textCapitalization:
+          _type == ItemType.sentence ? TextCapitalization.sentences : TextCapitalization.none,
+      style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700),
+      decoration: InputDecoration(enabledBorder: border, focusedBorder: border),
+    );
+  }
+
+  Widget _textField(
+    TextEditingController controller, {
+    String? hint,
+    int minLines = 1,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      minLines: minLines,
+      maxLines: maxLines,
+      style: const TextStyle(fontSize: 16, height: 1.5),
+      decoration: InputDecoration(hintText: hint),
+    );
+  }
+
+  Widget _labeled(String label, Widget child, {Widget? trailing}) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 6,
+        children: [FieldLabel(label, trailing: trailing), child],
+      );
+
+  Widget _typeChip(String label, bool selected, VoidCallback onTap) => SelectChip(
+        label: label,
+        selected: selected,
+        onTap: onTap,
+        color: _type.color,
+        selectedBackground: _type.background,
+      );
+}
+
+class _SaveBar extends StatelessWidget {
+  const _SaveBar({required this.label, required this.xp, required this.onPressed});
+
+  final String label;
+  final int xp;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.surfaceAlt)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        12,
+        20,
+        12 + MediaQuery.paddingOf(context).bottom,
+      ),
+      child: ChunkyButton(label: label, badge: '+$xp XP', onPressed: onPressed),
+    );
+  }
+}

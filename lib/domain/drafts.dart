@@ -1,0 +1,68 @@
+import 'enums.dart';
+import 'formula.dart';
+
+/// Egy új példamondat az Add képernyőről.
+class NewExample {
+  const NewExample(this.english, {this.hungarian});
+
+  final String english;
+  final String? hungarian;
+}
+
+/// Egy hibás példa egy nyelvtani szabályhoz (pl. „If I would have…”).
+class NewMistake {
+  const NewMistake(this.wrong, {this.explanation});
+
+  final String wrong;
+  final String? explanation;
+}
+
+/// Minden, ami egy új elem mentéséhez kell – az Add képernyő ezt állítja össze.
+class NewItem {
+  const NewItem({
+    required this.type,
+    required this.english,
+    this.hungarian = '',
+    this.notes,
+    this.partOfSpeech,
+    this.phraseKind,
+    this.ipa,
+    this.level,
+    this.source,
+    this.ruleCategory,
+    this.formula = const [],
+    this.trapNote,
+    this.tags = const [],
+    this.examples = const [],
+    this.mistakes = const [],
+  });
+
+  final ItemType type;
+
+  /// Szó, kifejezés, szabály neve vagy maga a mondat.
+  final String english;
+
+  /// Magyar jelentés / fordítás.
+  final String hungarian;
+
+  /// Hosszabb magyarázat (kifejezés jelentése, szabály leírása).
+  final String? notes;
+
+  final PartOfSpeech? partOfSpeech;
+  final PhraseKind? phraseKind;
+  final String? ipa;
+  final CefrLevel? level;
+  final String? source;
+  final String? ruleCategory;
+  final List<FormulaBlock> formula;
+  final String? trapNote;
+
+  /// Címkenevek, `#` nélkül vagy azzal.
+  final List<String> tags;
+
+  /// Helyes példák – mondat elemként is elmentődnek.
+  final List<NewExample> examples;
+
+  /// Hibás példák – csak szabályoknál.
+  final List<NewMistake> mistakes;
+}

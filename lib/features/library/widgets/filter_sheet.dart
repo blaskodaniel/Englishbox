@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../app/theme.dart';
+import '../../../data/providers.dart';
+import '../../../domain/enums.dart';
+import '../../../widgets/field_label.dart';
+import '../../../widgets/select_chip.dart';
+import '../library_filter.dart';
+
+Future<void> showLibraryFilterSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppColors.surface,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => const _FilterSheet(),
+  );
+}
+
+/// Szint, címke és kedvencek szűrő. Minden koppintás azonnal érvényesül.
+class _FilterSheet extends ConsumerWidget {
+  const _FilterSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter = ref.watch(libraryFilterProvider);
+    final notifier = ref.read(libraryFilterProvider.notifier);
+    final tags = ref.watch(tagsWithCountsProvider).value ?? const [];
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 18,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Filter', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                ),
+                if (filter.hasExtraFilters)
+                  TextButton(onPressed: notifier.clearExtraFilters, child: const Text('Clear')),
+              ],
+            ),
+            _section(
+              'Level',
+              [
+                for (final level in CefrLevel.values)
+                  SelectChip(
+                    label: level.label,
+                    selected: filter.level == level,
+                    onTap: () => notifier.setLevel(filter.level == level ? null : level),
+                  ),
+              ],
+            ),
+            _section(
+              'Tag',
+              tags.isEmpty
+                  ? [const Text('No tags yet', style: TextStyle(color: AppColors.textMuted))]
+                  : [
+                      for (final t in tags)
+                        SelectChip(
+                          label: '#${t.tag.name} · ${t.count}',
+                          selected: filter.tagId == t.tag.id,
+                          onTap: () => filter.tagId == t.tag.id
+                              ? notifier.setTag(null, null)
+                              : notifier.setTag(t.tag.id, t.tag.name),
+                        ),
+                    ],
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Favourites only'),
+              value: filter.favoritesOnly,
+              onChanged: notifier.setFavoritesOnly,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _section(String title, List<Widget> chips) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          FieldLabel(title),
+          Wrap(spacing: 8, runSpacing: 8, children: chips),
+        ],
+      );
+}
