@@ -195,7 +195,6 @@ class _Tile extends StatelessWidget {
       child: Container(
         height: 44,
         padding: const EdgeInsets.symmetric(horizontal: 14),
-        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: used ? AppColors.input : AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(12),
@@ -207,12 +206,17 @@ class _Tile extends StatelessWidget {
               ? null
               : const [BoxShadow(color: AppColors.borderStrong, offset: Offset(0, 3))],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: used ? Colors.transparent : AppColors.text,
+        // `widthFactor: 1` → csak a szó szélességét foglalja el, így a csempék
+        // egymás mellé kerülnek, és ami nem fér ki, új sorba törik.
+        child: Center(
+          widthFactor: 1,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: used ? Colors.transparent : AppColors.text,
+            ),
           ),
         ),
       ),

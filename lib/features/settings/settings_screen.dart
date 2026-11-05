@@ -118,7 +118,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             LabeledSetting(
               label: 'Review session length',
               child: SegmentedPicker<int>(
-                options: const [(10, '10'), (20, '20'), (30, '30')],
+                options: const [(5, '5'), (10, '10'), (20, '20'), (30, '30')],
                 value: s.sessionLength,
                 onChanged: (v) => _update(AppSettingsCompanion(sessionLength: Value(v))),
               ),

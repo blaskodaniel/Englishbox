@@ -4,6 +4,7 @@ import '../../../app/format.dart';
 import '../../../app/labels.dart';
 import '../../../app/theme.dart';
 import '../../../data/db.dart';
+import '../../../domain/note_markup.dart';
 import '../../../widgets/highlighted_text.dart';
 
 /// Nagybetűs szürke szakaszcím: „EXAMPLES · 2”.
@@ -185,13 +186,18 @@ class DetailFooter extends StatelessWidget {
   }
 }
 
-/// Többsoros jegyzet megjelenítése: a „•”, „-” vagy „*” kezdetű sorok
-/// számozott pontok lesznek (mint a terv „Use it when” listája), a többi bekezdés.
+/// Többsoros jegyzet megjelenítése a formázással együtt (`**félkövér**`,
+/// `_dőlt_`, `==kiemelt==`). A „•”, „-” vagy „*” kezdetű sorok felsorolás-
+/// pontok: [numbered] esetén számozva (mint a terv „Use it when” listája),
+/// különben színes „•” jellel. A többi sor bekezdés.
 class NotesText extends StatelessWidget {
-  const NotesText(this.notes, {super.key, this.accent = AppColors.rule});
+  const NotesText(this.notes, {super.key, this.accent = AppColors.rule, this.numbered = true});
 
   final String notes;
   final Color accent;
+  final bool numbered;
+
+  static const _style = TextStyle(fontSize: 15, height: 1.45);
 
   @override
   Widget build(BuildContext context) {
@@ -202,26 +208,42 @@ class NotesText extends StatelessWidget {
       spacing: 8,
       children: [
         for (final line in lines)
-          if (RegExp(r'^[•\-*]\s*').hasMatch(line))
+          if (bulletPattern.hasMatch(line))
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 10,
               children: [
                 Text(
-                  '${++number}',
+                  numbered ? '${++number}' : '•',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: accent),
                 ),
-                Expanded(
-                  child: Text(
-                    line.replaceFirst(RegExp(r'^[•\-*]\s*'), ''),
-                    style: const TextStyle(fontSize: 15, height: 1.45),
-                  ),
-                ),
+                Expanded(child: _rich(line.replaceFirst(bulletPattern, ''))),
               ],
             )
           else
-            Text(line, style: const TextStyle(fontSize: 15, height: 1.45)),
+            _rich(line),
       ],
     );
   }
+
+  /// Egy sor formázott darabokból – mint több egymás melletti `<span>`.
+  Widget _rich(String line) => Text.rich(
+    TextSpan(
+      children: [
+        for (final span in parseNoteInline(line))
+          TextSpan(
+            text: span.text,
+            style: TextStyle(
+              fontWeight: span.styles.contains(NoteStyle.bold) ? FontWeight.w700 : null,
+              fontStyle: span.styles.contains(NoteStyle.italic) ? FontStyle.italic : null,
+              color: span.styles.contains(NoteStyle.highlight) ? accent : null,
+              backgroundColor: span.styles.contains(NoteStyle.highlight)
+                  ? accent.withValues(alpha: 0.16)
+                  : null,
+            ),
+          ),
+      ],
+    ),
+    style: _style,
+  );
 }

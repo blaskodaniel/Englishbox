@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/labels.dart';
 import '../../../app/theme.dart';
 import '../../../domain/enums.dart';
+import '../../../domain/note_markup.dart';
 import '../../../domain/srs.dart';
 import '../../../widgets/chunky_button.dart';
 import '../../../widgets/highlighted_text.dart';
@@ -219,7 +220,7 @@ class _WordCardTaskState extends State<WordCardTask> {
           ),
         if ((item.notes ?? '').trim().isNotEmpty)
           Text(
-            item.notes!.trim(),
+            item.notes!.trim().split('\n').map(stripNoteMarkup).join('\n'),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 15, height: 1.45, color: AppColors.textSoft),
           ),
@@ -233,13 +234,26 @@ class _WordCardTaskState extends State<WordCardTask> {
             color: item.hungarian.trim().isEmpty ? AppColors.textMuted : color,
           ),
         ),
-      if (example != null)
+      if (example != null) ...[
         HighlightedText(
           example.english,
           highlight: item.type == ItemType.rule ? '' : item.english,
           color: AppColors.text,
           style: const TextStyle(fontSize: 15, height: 1.45, color: AppColors.textSoft),
         ),
+        // A példamondat magyarul is – halványabban, dőlten.
+        if (example.hungarian.trim().isNotEmpty)
+          Text(
+            example.hungarian.trim(),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.45,
+              fontStyle: FontStyle.italic,
+              color: AppColors.textMuted,
+            ),
+          ),
+      ],
     ];
 
     return Container(

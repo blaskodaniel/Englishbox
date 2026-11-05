@@ -20,6 +20,7 @@ import 'example_draft.dart';
 import 'widgets/examples_editor.dart';
 import 'widgets/formula_editor.dart';
 import 'widgets/ipa_field.dart';
+import 'widgets/notes_editor.dart';
 import 'widgets/tags_source_row.dart';
 import 'widgets/type_selector.dart';
 
@@ -191,7 +192,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       type: _type,
       english: _english.text,
       hungarian: isRule ? '' : _hungarian.text,
-      notes: _type == ItemType.phrase || isRule ? _notes.text : null,
+      notes: _type == ItemType.sentence ? null : _notes.text,
       partOfSpeech: _type == ItemType.word ? _partOfSpeech : null,
       ipa: _type == ItemType.word ? _ipa.text : null,
       phraseKind: _type == ItemType.phrase ? _phraseKind : null,
@@ -369,6 +370,11 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
             ],
           ),
         ),
+        NotesEditor(
+          controller: _notes,
+          color: _type.color,
+          hint: 'Anything worth remembering: usage, word family, look-alikes…',
+        ),
       ],
       ItemType.phrase => [
         _mainField(),
@@ -388,10 +394,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           ),
         ),
         _labeled('Meaning in Hungarian', _textField(_hungarian, hint: 'egy hullámhosszon vagyunk')),
-        _labeled(
-          'Notes (optional)',
-          _textField(_notes, hint: 'When and how to use it…', minLines: 3, maxLines: 8),
-        ),
+        NotesEditor(controller: _notes, color: _type.color, hint: 'When and how to use it…'),
       ],
       ItemType.rule => [
         _labeled(

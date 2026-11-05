@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/db.dart';
 import '../domain/enums.dart';
 import '../domain/formula.dart';
+import '../domain/note_markup.dart';
 import 'theme.dart';
 
 /// Az elem fajtájának felirata: „Adjective”, „Phrasal verb”, „Grammar”…
@@ -20,7 +21,7 @@ String formulaText(List<FormulaBlock> blocks) => blocks.map((b) => b.text).join(
 String itemSubtitle(Item item) {
   if (item.type == ItemType.rule) {
     if (item.formula.isNotEmpty) return formulaText(item.formula);
-    return (item.notes ?? '').split('\n').first;
+    return stripNoteMarkup((item.notes ?? '').split('\n').first);
   }
   return item.hungarian;
 }

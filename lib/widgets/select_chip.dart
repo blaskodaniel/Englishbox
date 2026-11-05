@@ -34,16 +34,21 @@ class SelectChip extends StatelessWidget {
         child: InkWell(
           customBorder: shape,
           onTap: onTap,
+          // Az `alignment` nélküli Container csak akkora, mint a tartalma –
+          // `alignment`-tel kitöltené a Wrap teljes szélességét (mint egy
+          // `display: block`), és a chipek egymás alá kerülnének.
           child: Container(
             height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-                color: selected ? color : AppColors.textSoft,
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                  color: selected ? color : AppColors.textSoft,
+                ),
               ),
             ),
           ),

@@ -11,10 +11,14 @@ import 'session_parts.dart';
 /// Szabad fordítás: beírod, összeveted a mentett fordítással (a különbségek
 /// kiemelve), majd te értékeled magad: Wrong / Almost / Correct.
 class TranslateTask extends StatefulWidget {
-  const TranslateTask({super.key, required this.card, required this.onGrade});
+  const TranslateTask({super.key, required this.card, required this.onGrade, this.onUseTiles});
 
   final ReviewCard card;
   final ValueChanged<ReviewGrade> onGrade;
+
+  /// Ha a mondatépítésből váltottál ide („Use keyboard”), ezzel léphetsz
+  /// vissza a szócsempékhez. `null` → nincs vissza gomb.
+  final VoidCallback? onUseTiles;
 
   @override
   State<TranslateTask> createState() => _TranslateTaskState();
@@ -59,6 +63,24 @@ class _TranslateTaskState extends State<TranslateTask> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 16,
               children: [
+                if (widget.onUseTiles != null && !_checked)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: widget.onUseTiles,
+                      icon: const Icon(Icons.view_module_outlined, size: 16),
+                      label: const Text('Use word tiles'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.accent,
+                        visualDensity: VisualDensity.compact,
+                        textStyle: const TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
                 _DirectionToggle(
                   toEnglish: _toEnglish,
                   enabled: !_checked,

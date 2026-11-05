@@ -83,7 +83,7 @@ class _ItemBody extends ConsumerWidget {
         if (notes != null && notes.isNotEmpty)
           DetailSection(
             title: 'Notes',
-            children: [NotesText(notes, accent: item.type.color)],
+            children: [NotesText(notes, accent: item.type.color, numbered: false)],
           ),
         if (detail.examples.isNotEmpty)
           DetailSection(

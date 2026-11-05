@@ -156,7 +156,16 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
         showXp: ref.watch(gameModeProvider),
         onUseKeyboard: () => setState(() => session.switchTask(ReviewTask.freeTranslation)),
       ),
-      ReviewTask.freeTranslation => TranslateTask(key: key, card: card, onGrade: _gradeAndNext),
+      ReviewTask.freeTranslation => TranslateTask(
+        key: key,
+        card: card,
+        onGrade: _gradeAndNext,
+        // Csak akkor van hová visszalépni, ha a kártyához készültek csempék
+        // (vagyis mondatépítésből váltottunk át).
+        onUseTiles: card.tiles.isEmpty
+            ? null
+            : () => setState(() => session.switchTask(ReviewTask.buildSentence)),
+      ),
     };
   }
 

@@ -26,17 +26,14 @@ class IpaField extends StatefulWidget {
 }
 
 class _IpaFieldState extends State<IpaField> {
-  /// A leggyakoribbak – ezek mindig látszanak (a terv sorrendjében).
-  static const _common = ['ˈ', 'ː', 'ə', 'ɪ', 'æ', 'ʌ', 'θ', 'ð', 'ʃ', 'ŋ'];
-
-  /// A „…” gombbal kinyíló további jelek.
-  static const _more = [
-    '/', 'ˌ', 'ɑ', 'ɒ', 'ɔ', 'ɜ', 'ʊ', 'ɛ', 'e', 'i', 'u', //
+  /// Elöl a leggyakoribbak (a terv sorrendjében), utána a ritkábbak –
+  /// egyetlen, oldalra húzható sorban.
+  static const _symbols = [
+    'ˈ', 'ː', 'ə', 'ɪ', 'æ', 'ʌ', 'θ', 'ð', 'ʃ', 'ŋ', //
+    '/', 'ˌ', 'ɑ', 'ɒ', 'ɔ', 'ɜ', 'ʊ', 'ɛ', 'e', 'i', 'u',
     'ʒ', 'tʃ', 'dʒ', 'j', 'r', 'ɹ', 'ɡ', 'ɾ', 'ʔ',
     'eɪ', 'aɪ', 'ɔɪ', 'əʊ', 'oʊ', 'aʊ', 'ɪə', 'eə', 'ʊə',
   ];
-
-  bool _expanded = false;
 
   /// A kurzor helyére szúrja be a jelet (a kijelölt szöveget lecseréli) –
   /// mint egy `input.setRangeText()` a weben.
@@ -55,8 +52,6 @@ class _IpaFieldState extends State<IpaField> {
 
   @override
   Widget build(BuildContext context) {
-    final symbols = [..._common, if (_expanded) ..._more];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 6,
@@ -90,18 +85,19 @@ class _IpaFieldState extends State<IpaField> {
             ),
           ],
         ),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (final symbol in symbols) _SymbolKey(label: symbol, onTap: () => _insert(symbol)),
-            _SymbolKey(
-              label: _expanded ? '‹' : '…',
-              tooltip: _expanded ? 'Fewer symbols' : 'More symbols',
-              color: widget.color,
-              onTap: () => setState(() => _expanded = !_expanded),
+        // Vízszintesen görgethető lista (mint `overflow-x: auto`) – csak a
+        // látható gombok épülnek fel, ahogy egy virtualizált listában.
+        SizedBox(
+          height: 36,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _symbols.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 6),
+            itemBuilder: (_, i) => _SymbolKey(
+              label: _symbols[i],
+              onTap: () => _insert(_symbols[i]),
             ),
-          ],
+          ),
         ),
       ],
     );
@@ -109,21 +105,14 @@ class _IpaFieldState extends State<IpaField> {
 }
 
 class _SymbolKey extends StatelessWidget {
-  const _SymbolKey({
-    required this.label,
-    required this.onTap,
-    this.tooltip,
-    this.color = AppColors.text,
-  });
+  const _SymbolKey({required this.label, required this.onTap});
 
   final String label;
   final VoidCallback onTap;
-  final String? tooltip;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final key = Material(
+    return Material(
       color: AppColors.surfaceAlt,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
@@ -135,12 +124,11 @@ class _SymbolKey extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Center(
               widthFactor: 1,
-              child: Text(label, style: TextStyle(fontSize: 16, color: color)),
+              child: Text(label, style: const TextStyle(fontSize: 16)),
             ),
           ),
         ),
       ),
     );
-    return tooltip == null ? key : Tooltip(message: tooltip, child: key);
   }
 }
