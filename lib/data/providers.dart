@@ -11,6 +11,7 @@ import 'backup_service.dart';
 import 'db.dart';
 import 'models.dart';
 import 'repositories/activity_repository.dart';
+import 'repositories/collections_repository.dart';
 import 'repositories/items_repository.dart';
 import 'repositories/review_repository.dart';
 import 'repositories/settings_repository.dart';
@@ -46,6 +47,23 @@ final itemDetailProvider = StreamProvider.family<ItemDetail?, int>(
 
 final tagsWithCountsProvider = StreamProvider<List<TagWithCount>>(
   (ref) => ref.watch(tagsRepositoryProvider).watchTagsWithCounts(),
+);
+
+final collectionsRepositoryProvider = Provider(
+  (ref) => CollectionsRepository(ref.watch(databaseProvider)),
+);
+
+final collectionsProvider = StreamProvider<List<CollectionSummary>>(
+  (ref) => ref.watch(collectionsRepositoryProvider).watchCollections(),
+);
+
+final levelCountsProvider = StreamProvider<Map<CefrLevel, int>>(
+  (ref) => ref.watch(collectionsRepositoryProvider).watchLevelCounts(),
+);
+
+/// Egy elem gyűjteményei (azonosítók) – az elemrészlet gombjához.
+final itemCollectionIdsProvider = StreamProvider.family<Set<int>, int>(
+  (ref, itemId) => ref.watch(collectionsRepositoryProvider).watchCollectionIdsOf(itemId),
 );
 
 final settingsProvider = StreamProvider<Settings>(

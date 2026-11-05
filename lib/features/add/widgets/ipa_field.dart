@@ -93,10 +93,8 @@ class _IpaFieldState extends State<IpaField> {
             scrollDirection: Axis.horizontal,
             itemCount: _symbols.length,
             separatorBuilder: (_, _) => const SizedBox(width: 6),
-            itemBuilder: (_, i) => _SymbolKey(
-              label: _symbols[i],
-              onTap: () => _insert(_symbols[i]),
-            ),
+            itemBuilder: (_, i) =>
+                _SymbolKey(label: _symbols[i], onTap: () => _insert(_symbols[i])),
           ),
         ),
       ],
@@ -122,10 +120,7 @@ class _SymbolKey extends StatelessWidget {
           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Center(
-              widthFactor: 1,
-              child: Text(label, style: const TextStyle(fontSize: 16)),
-            ),
+            child: Center(widthFactor: 1, child: Text(label, style: const TextStyle(fontSize: 16))),
           ),
         ),
       ),

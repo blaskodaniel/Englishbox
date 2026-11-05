@@ -8,8 +8,9 @@ class NewExample {
   final String english;
   final String? hungarian;
 
-  /// Szerkesztéskor: a már elmentett mondat elem azonosítója. Ha `null`,
-  /// a mentés új mondatot hoz létre.
+  /// Egy már a dobozban lévő mondat elem azonosítója (szerkesztéskor a meglévő
+  /// példa, vagy a „From my box” gombbal választott mondat). Ilyenkor csak
+  /// összekapcsoljuk; ha `null`, a mentés új mondatot hoz létre.
   final int? existingId;
 }
 
@@ -39,6 +40,7 @@ class NewItem {
     this.tags = const [],
     this.examples = const [],
     this.mistakes = const [],
+    this.similarIds = const [],
   });
 
   final ItemType type;
@@ -69,4 +71,7 @@ class NewItem {
 
   /// Hibás példák – csak szabályoknál.
   final List<NewMistake> mistakes;
+
+  /// Hasonló szavak/kifejezések – a kapcsolat mindkét irányban létrejön.
+  final List<int> similarIds;
 }

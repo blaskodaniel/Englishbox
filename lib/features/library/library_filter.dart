@@ -12,6 +12,8 @@ class LibraryFilter {
     this.level,
     this.tagId,
     this.tagName,
+    this.collectionId,
+    this.collectionName,
     this.favoritesOnly = false,
     this.search = '',
   });
@@ -20,11 +22,14 @@ class LibraryFilter {
   final CefrLevel? level;
   final int? tagId;
   final String? tagName;
+  final int? collectionId;
+  final String? collectionName;
   final bool favoritesOnly;
   final String search;
 
   /// Van-e a típuson és a keresésen kívül aktív szűrő (a szűrőgomb jelzéséhez).
-  bool get hasExtraFilters => level != null || tagId != null || favoritesOnly;
+  bool get hasExtraFilters =>
+      level != null || tagId != null || collectionId != null || favoritesOnly;
 
   bool get isEmpty => type == null && !hasExtraFilters && search.trim().isEmpty;
 }
@@ -38,16 +43,22 @@ class LibraryFilterNotifier extends Notifier<LibraryFilter> {
     ItemType? Function()? type,
     CefrLevel? Function()? level,
     (int, String)? Function()? tag,
+    (int, String)? Function()? collection,
     bool? favoritesOnly,
     String? search,
   }) {
     final s = state;
     final newTag = tag != null ? tag() : (s.tagId == null ? null : (s.tagId!, s.tagName ?? ''));
+    final newCollection = collection != null
+        ? collection()
+        : (s.collectionId == null ? null : (s.collectionId!, s.collectionName ?? ''));
     return LibraryFilter(
       type: type != null ? type() : s.type,
       level: level != null ? level() : s.level,
       tagId: newTag?.$1,
       tagName: newTag?.$2,
+      collectionId: newCollection?.$1,
+      collectionName: newCollection?.$2,
       favoritesOnly: favoritesOnly ?? s.favoritesOnly,
       search: search ?? s.search,
     );
@@ -59,6 +70,9 @@ class LibraryFilterNotifier extends Notifier<LibraryFilter> {
 
   void setTag(int? id, String? name) =>
       state = _copy(tag: () => id == null ? null : (id, name ?? ''));
+
+  void setCollection(int? id, String? name) =>
+      state = _copy(collection: () => id == null ? null : (id, name ?? ''));
 
   void setFavoritesOnly(bool value) => state = _copy(favoritesOnly: value);
 
@@ -82,6 +96,7 @@ final libraryItemsProvider = StreamProvider<List<ItemListEntry>>((ref) {
         type: filter.type,
         level: filter.level,
         tagId: filter.tagId,
+        collectionId: filter.collectionId,
         favoritesOnly: filter.favoritesOnly,
         search: filter.search,
       );

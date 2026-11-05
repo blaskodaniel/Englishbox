@@ -212,6 +212,7 @@ class _FilterSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final parts = [
+      if (filter.collectionName != null) filter.collectionName!,
       filter.level?.label ?? 'All levels',
       if (filter.tagName != null) '#${filter.tagName}',
       if (filter.favoritesOnly) '★',

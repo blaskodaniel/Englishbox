@@ -22,6 +22,7 @@ class ItemsRepository {
     ItemType? type,
     CefrLevel? level,
     int? tagId,
+    int? collectionId,
     bool favoritesOnly = false,
     String search = '',
   }) {
@@ -37,6 +38,15 @@ class ItemsRepository {
         ..addColumns([_db.itemTags.itemId])
         ..where(_db.itemTags.itemId.equalsExp(_db.items.id) & _db.itemTags.tagId.equals(tagId));
       query.where(existsQuery(tagged));
+    }
+    if (collectionId != null) {
+      final inCollection = _db.selectOnly(_db.collectionItems)
+        ..addColumns([_db.collectionItems.itemId])
+        ..where(
+          _db.collectionItems.itemId.equalsExp(_db.items.id) &
+              _db.collectionItems.collectionId.equals(collectionId),
+        );
+      query.where(existsQuery(inCollection));
     }
     query.orderBy([OrderingTerm.desc(_db.items.createdAt), OrderingTerm.desc(_db.items.id)]);
 
@@ -209,15 +219,22 @@ class ItemsRepository {
 
       if (draft.type != ItemType.sentence) {
         for (final (index, example) in draft.examples.indexed) {
-          await _insertExample(
-            parentId: id,
-            example: example,
-            position: index,
-            level: draft.level,
-            source: draft.source,
-            tags: draft.tags,
-          );
+          final existingId = example.existingId;
+          if (existingId != null) {
+            // „From my box”: a meglévő mondatot csak összekapcsoljuk.
+            await _upsertLink(id, existingId, LinkRole.example, index);
+          } else {
+            await _insertExample(
+              parentId: id,
+              example: example,
+              position: index,
+              level: draft.level,
+              source: draft.source,
+              tags: draft.tags,
+            );
+          }
         }
+        await _replaceSimilar(id, draft.similarIds);
       }
 
       if (draft.type == ItemType.rule) {
@@ -292,13 +309,8 @@ class ItemsRepository {
         for (final (index, example) in draft.examples.indexed) {
           final existingId = example.existingId;
           if (existingId != null) {
-            await (_db.update(_db.itemLinks)..where(
-                  (l) =>
-                      l.parentId.equals(id) &
-                      l.childId.equals(existingId) &
-                      l.role.equalsValue(LinkRole.example),
-                ))
-                .write(ItemLinksCompanion(position: Value(index)));
+            // Megtartott példa (új sorrend), vagy most a dobozból választott.
+            await _upsertLink(id, existingId, LinkRole.example, index);
           } else {
             await _insertExample(
               parentId: id,
@@ -311,6 +323,7 @@ class ItemsRepository {
             created++;
           }
         }
+        await _replaceSimilar(id, draft.similarIds);
       }
 
       if (current.type == ItemType.rule) {
@@ -387,6 +400,35 @@ class ItemsRepository {
   }
 
   // ------------------------------------------------------------ segédek
+
+  /// Kapcsolat beszúrása, vagy ha már van, a sorrend frissítése
+  /// (SQL „upsert”: INSERT … ON CONFLICT DO UPDATE).
+  Future<void> _upsertLink(int parentId, int childId, LinkRole role, int position) async {
+    await _db
+        .into(_db.itemLinks)
+        .insertOnConflictUpdate(
+          ItemLinksCompanion.insert(
+            parentId: parentId,
+            childId: childId,
+            role: role,
+            position: Value(position),
+          ),
+        );
+  }
+
+  /// A „similar” kapcsolatok cseréje az űrlapon lévőkre. A kapcsolat kölcsönös:
+  /// mindkét irányban eltároljuk, így a másik elem oldalán is megjelenik.
+  Future<void> _replaceSimilar(int id, List<int> similarIds) async {
+    await (_db.delete(_db.itemLinks)..where(
+          (l) =>
+              l.role.equalsValue(LinkRole.similar) & (l.parentId.equals(id) | l.childId.equals(id)),
+        ))
+        .go();
+    for (final (index, otherId) in similarIds.where((o) => o != id).toSet().indexed) {
+      await _upsertLink(id, otherId, LinkRole.similar, index);
+      await _upsertLink(otherId, id, LinkRole.similar, 0);
+    }
+  }
 
   Future<int> _insertExample({
     required int parentId,

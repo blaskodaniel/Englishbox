@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/labels.dart';
 import '../../app/theme.dart';
+import '../../data/db.dart';
 import '../../data/providers.dart';
 import '../../domain/drafts.dart';
 import '../../domain/enums.dart';
@@ -21,6 +22,7 @@ import 'widgets/examples_editor.dart';
 import 'widgets/formula_editor.dart';
 import 'widgets/ipa_field.dart';
 import 'widgets/notes_editor.dart';
+import 'widgets/similar_editor.dart';
 import 'widgets/tags_source_row.dart';
 import 'widgets/type_selector.dart';
 
@@ -67,6 +69,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   List<FormulaBlock> _formula = [];
   bool _showTrapNote = false;
   List<ExampleDraft> _examples = [];
+  List<Item> _similar = [];
   List<String> _tags = [];
   String? _source;
   bool _saving = false;
@@ -127,6 +130,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       _showTrapNote = item.trapNote != null;
       _tags = [for (final tag in detail.tags) tag.name];
       _source = item.source;
+      _similar = [...detail.similar];
       _examples = [
         for (final sentence in detail.examples)
           ExampleDraft(
@@ -158,6 +162,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   }
 
   bool get _hasExamples => _type != ItemType.sentence;
+  bool get _hasSimilar => _type == ItemType.word || _type == ItemType.phrase;
   bool get _canSave => _loaded && _english.text.trim().isNotEmpty && !_saving;
 
   /// A félig beírt (még nem hozzáadott) példát is beleszámoljuk.
@@ -170,7 +175,9 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       final created = _examples.where((e) => e.createsSentence).length;
       return XpRules.perExample * (created + _pendingExample);
     }
-    return XpRules.forNewItem(_type, exampleCount: _examples.length + _pendingExample);
+    // A dobozból választott példákért nem jár XP – azok már megvoltak.
+    final created = _examples.where((e) => e.sentenceId == null).length;
+    return XpRules.forNewItem(_type, exampleCount: created + _pendingExample);
   }
 
   void _flushPendingExample() {
@@ -211,6 +218,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           for (final e in examples)
             if (!e.isCorrect) NewMistake(e.english, explanation: e.second),
       ],
+      similarIds: _hasSimilar ? [for (final item in _similar) item.id] : const [],
     );
   }
 
@@ -329,6 +337,13 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
               newEnglish: _newExample,
               newSecond: _newExampleSecond,
               editing: _isEditing,
+            ),
+          if (_hasSimilar)
+            SimilarEditor(
+              items: _similar,
+              onChanged: (list) => setState(() => _similar = list),
+              color: _type.color,
+              selfId: widget.editItemId,
             ),
           LevelPicker(value: _level, onChanged: (level) => setState(() => _level = level)),
           TagsSourceRow(

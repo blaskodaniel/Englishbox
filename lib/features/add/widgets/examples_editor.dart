@@ -6,6 +6,7 @@ import '../../../domain/enums.dart';
 import '../../../domain/xp.dart';
 import '../../../widgets/field_label.dart';
 import '../../../widgets/highlighted_text.dart';
+import '../../../widgets/item_picker_sheet.dart';
 import '../example_draft.dart';
 
 /// Példamondatok listája + új példa beviteli doboza.
@@ -51,6 +52,31 @@ class ExamplesEditor extends StatelessWidget {
     newSecond.clear();
   }
 
+  /// „From my box”: már elmentett mondatok kiválasztása példának. Ezek nem
+  /// jönnek létre újra, csak összekapcsolódnak – ezért XP sem jár értük.
+  Future<void> _pickFromBox(BuildContext context) async {
+    final picked = await showItemPickerSheet(
+      context,
+      title: 'Examples from your box',
+      types: const {ItemType.sentence},
+      excludeIds: {
+        for (final e in examples)
+          if (e.sentenceId != null) e.sentenceId!,
+      },
+      confirmLabel: 'Add examples',
+    );
+    if (picked == null || picked.isEmpty) return;
+    onChanged([
+      ...examples,
+      for (final sentence in picked)
+        ExampleDraft(
+          english: sentence.english,
+          second: sentence.hungarian.trim().isEmpty ? null : sentence.hungarian,
+          sentenceId: sentence.id,
+        ),
+    ]);
+  }
+
   void _remove(int index) => onChanged([...examples]..removeAt(index));
 
   void _setCorrect(int index, bool isCorrect) {
@@ -82,21 +108,27 @@ class ExamplesEditor extends StatelessWidget {
             onSetCorrect: (value) => _setCorrect(index, value),
           ),
         _NewExampleBox(english: newEnglish, second: newSecond, onSubmit: _add),
-        OutlinedButton.icon(
-          onPressed: _add,
-          icon: const Icon(Icons.add_rounded, size: 18),
-          label: const Text('Add example'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.text,
-            minimumSize: const Size.fromHeight(46),
-            side: const BorderSide(color: AppColors.borderStrong, width: 2),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            textStyle: const TextStyle(
-              fontFamily: 'Lexend',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+        // Két egyforma széles gomb egymás mellett (mint egy 2 oszlopos grid).
+        Row(
+          spacing: 10,
+          children: [
+            Expanded(
+              child: _OutlineAction(
+                icon: Icons.add_rounded,
+                label: 'Add example',
+                color: AppColors.text,
+                onPressed: _add,
+              ),
             ),
-          ),
+            Expanded(
+              child: _OutlineAction(
+                icon: Icons.link_rounded,
+                label: 'From my box',
+                color: AppColors.sentence,
+                onPressed: () => _pickFromBox(context),
+              ),
+            ),
+          ],
         ),
         Text(
           editing
@@ -109,6 +141,36 @@ class ExamplesEditor extends StatelessWidget {
           style: const TextStyle(fontSize: 12, height: 1.5, color: AppColors.textMuted),
         ),
       ],
+    );
+  }
+}
+
+class _OutlineAction extends StatelessWidget {
+  const _OutlineAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        minimumSize: const Size.fromHeight(46),
+        side: const BorderSide(color: AppColors.borderStrong, width: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: const TextStyle(fontFamily: 'Lexend', fontSize: 14, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

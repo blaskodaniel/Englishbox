@@ -11,6 +11,7 @@ import '../../domain/xp.dart';
 import '../../services/speech_service.dart';
 import '../../widgets/chunky_button.dart';
 import '../../widgets/screen_header.dart';
+import '../collections/pick_collections_sheet.dart';
 import 'add_example_dialog.dart';
 import 'widgets/detail_parts.dart';
 import 'widgets/item_hero.dart';
@@ -182,9 +183,16 @@ class _HeaderActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final item = detail.item;
+    final inCollection = ref.watch(itemCollectionIdsProvider(item.id)).value?.isNotEmpty ?? false;
     return Row(
       spacing: 8,
       children: [
+        SquareIconButton(
+          icon: inCollection ? Icons.bookmark_rounded : Icons.bookmark_add_outlined,
+          tooltip: 'Collections',
+          color: inCollection ? AppColors.accent : AppColors.text,
+          onPressed: () => showPickCollectionsSheet(context, itemId: item.id),
+        ),
         SquareIconButton(
           icon: item.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
           tooltip: item.isFavorite ? 'Remove from favourites' : 'Add to favourites',

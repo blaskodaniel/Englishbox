@@ -58,6 +58,17 @@ class TagWithCount {
   final int count;
 }
 
+/// Egy gyűjtemény a Collections listához: elemszám és hány „Mastered” közülük.
+class CollectionSummary {
+  const CollectionSummary(this.collection, {required this.total, required this.mastered});
+
+  final Collection collection;
+  final int total;
+  final int mastered;
+
+  double get masteredFraction => total == 0 ? 0 : mastered / total;
+}
+
 Mastery masteryOf(ReviewState? review) => review == null
     ? Mastery.newItem
     : Mastery.from(repetitions: review.repetitions, intervalDays: review.intervalDays);

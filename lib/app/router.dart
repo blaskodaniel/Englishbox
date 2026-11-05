@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../domain/enums.dart';
 import '../features/add/add_item_screen.dart';
+import '../features/collections/collections_screen.dart';
 import '../features/item_detail/item_detail_screen.dart';
 import '../features/library/library_screen.dart';
 import '../features/progress/progress_screen.dart';
@@ -12,7 +13,6 @@ import '../features/review/review_session_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/today/today_screen.dart';
 import '../widgets/app_shell.dart';
-import '../widgets/placeholder_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -87,10 +87,6 @@ final appRouter = GoRouter(
       },
     ),
     GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
-    GoRoute(
-      path: '/tags',
-      builder: (context, state) =>
-          const PlaceholderScreen(title: 'Collections & tags', showAppBar: true),
-    ),
+    GoRoute(path: '/tags', builder: (context, state) => const CollectionsScreen()),
   ],
 );

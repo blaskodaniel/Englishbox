@@ -27,6 +27,7 @@ class _FilterSheet extends ConsumerWidget {
     final filter = ref.watch(libraryFilterProvider);
     final notifier = ref.read(libraryFilterProvider.notifier);
     final tags = ref.watch(tagsWithCountsProvider).value ?? const [];
+    final collections = ref.watch(collectionsProvider).value ?? const [];
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -55,6 +56,17 @@ class _FilterSheet extends ConsumerWidget {
                   onTap: () => notifier.setLevel(filter.level == level ? null : level),
                 ),
             ]),
+            if (collections.isNotEmpty)
+              _section('Collection', [
+                for (final c in collections)
+                  SelectChip(
+                    label: '${c.collection.name} · ${c.total}',
+                    selected: filter.collectionId == c.collection.id,
+                    onTap: () => filter.collectionId == c.collection.id
+                        ? notifier.setCollection(null, null)
+                        : notifier.setCollection(c.collection.id, c.collection.name),
+                  ),
+              ]),
             _section(
               'Tag',
               tags.isEmpty
