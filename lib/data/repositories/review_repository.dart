@@ -5,14 +5,20 @@ import '../../domain/srs.dart';
 import '../db.dart';
 
 /// A Review fül „Focus” szűrője: csak egy szint és/vagy egy címke elemei.
+/// Az [excludedTypes] a beállításokból jön: ezek a típusok nem jönnek elő
+/// szókártyaként (pl. a nyelvtan kikapcsolva).
 class ReviewFocus {
-  const ReviewFocus({this.level, this.tagId, this.tagName});
+  const ReviewFocus({this.level, this.tagId, this.tagName, this.excludedTypes = const {}});
 
   final CefrLevel? level;
   final int? tagId;
   final String? tagName;
+  final Set<ItemType> excludedTypes;
 
   bool get isEmpty => level == null && tagId == null;
+
+  ReviewFocus withExcludedTypes(Set<ItemType> types) =>
+      ReviewFocus(level: level, tagId: tagId, tagName: tagName, excludedTypes: types);
 }
 
 /// Egy esedékes elem az ütemezésével.
@@ -97,6 +103,9 @@ class ReviewRepository {
       innerJoin(_db.reviewStates, _db.reviewStates.itemId.equalsExp(_db.items.id)),
     ]);
     if (focus.level != null) query.where(_db.items.level.equalsValue(focus.level));
+    if (focus.excludedTypes.isNotEmpty) {
+      query.where(_db.items.type.isNotIn([for (final t in focus.excludedTypes) t.name]));
+    }
     if (focus.tagId != null) {
       final tagged = _db.selectOnly(_db.itemTags)
         ..addColumns([_db.itemTags.itemId])

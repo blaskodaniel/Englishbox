@@ -308,9 +308,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       bottomNavigationBar: !_loaded
           ? null
           : _SaveBar(
-              label: _isEditing
-                  ? 'Save changes'
-                  : (_type == ItemType.rule ? 'Save rule' : 'Save to box'),
+              label: _isEditing ? 'Save changes' : 'Save to box',
               badge: _xp > 0 ? '+$_xp XP' : null,
               onPressed: _canSave ? _save : null,
             ),

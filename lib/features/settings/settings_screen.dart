@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/labels.dart';
 import '../../app/theme.dart';
 import '../../data/db.dart';
 import '../../data/providers.dart';
@@ -133,6 +134,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
                 value: s.answerMode,
                 onChanged: (v) => _update(AppSettingsCompanion(answerMode: Value(v))),
+              ),
+            ),
+            LabeledSetting(
+              label: 'Word cards include',
+              child: _CardTypesPicker(
+                selected: parseCardTypes(s.cardTypes),
+                onChanged: (types) =>
+                    _update(AppSettingsCompanion(cardTypes: Value(formatCardTypes(types)))),
               ),
             ),
           ],
@@ -305,6 +314,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             if (v != null) _update(AppSettingsCompanion(levelGoal: Value(v)));
           },
         ),
+      ],
+    );
+  }
+}
+
+/// Words / Phrases / Grammar – több is kiválasztható, de legalább egy marad
+/// (az utolsót nem lehet kikapcsolni).
+class _CardTypesPicker extends StatelessWidget {
+  const _CardTypesPicker({required this.selected, required this.onChanged});
+
+  final Set<ItemType> selected;
+  final ValueChanged<Set<ItemType>> onChanged;
+
+  static const _labels = {
+    ItemType.word: 'Words',
+    ItemType.phrase: 'Phrases',
+    ItemType.rule: 'Grammar',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final type in selectableCardTypes)
+          FilterChip(
+            label: Text(_labels[type]!),
+            selected: selected.contains(type),
+            showCheckmark: true,
+            checkmarkColor: type.color,
+            selectedColor: type.background,
+            backgroundColor: Colors.transparent,
+            labelStyle: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: selected.contains(type) ? type.color : AppColors.textSoft,
+            ),
+            side: BorderSide(
+              color: selected.contains(type) ? type.color : AppColors.borderStrong,
+              width: 2,
+            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.chip)),
+            onSelected: (on) {
+              final next = {...selected};
+              on ? next.add(type) : next.remove(type);
+              if (next.isNotEmpty) onChanged(next);
+            },
+          ),
       ],
     );
   }

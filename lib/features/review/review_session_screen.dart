@@ -44,7 +44,7 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
     try {
       final repo = ref.read(reviewRepositoryProvider);
       final settings = await ref.read(settingsRepositoryProvider).get();
-      final due = await repo.loadDue(ref.read(reviewFocusProvider));
+      final due = await repo.loadDue(ref.read(effectiveReviewFocusProvider));
       final entries = selectEntries(due, widget.mode, settings.sessionLength);
       final examples = await repo.firstExamples(
         entries.where((e) => !e.isTranslatable).map((e) => e.item.id),

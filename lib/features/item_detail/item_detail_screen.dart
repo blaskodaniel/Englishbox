@@ -9,6 +9,8 @@ import '../../data/providers.dart';
 import '../../domain/enums.dart';
 import '../../domain/xp.dart';
 import '../../services/speech_service.dart';
+import '../../data/db.dart';
+import '../../widgets/check_sheet.dart';
 import '../../widgets/chunky_button.dart';
 import '../../widgets/screen_header.dart';
 import '../collections/pick_collections_sheet.dart';
@@ -46,9 +48,16 @@ class ItemDetailScreen extends ConsumerWidget {
                 null => const _Missing(),
                 final detail => SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                  child: detail.item.type == ItemType.rule
-                      ? RuleBody(detail: detail)
-                      : _ItemBody(detail: detail),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: 14,
+                    children: [
+                      if (detail.item.needsCheck) _CheckBanner(item: detail.item),
+                      detail.item.type == ItemType.rule
+                          ? RuleBody(detail: detail)
+                          : _ItemBody(detail: detail),
+                    ],
+                  ),
                 ),
               },
             ),
@@ -194,6 +203,12 @@ class _HeaderActions extends ConsumerWidget {
           onPressed: () => showPickCollectionsSheet(context, itemId: item.id),
         ),
         SquareIconButton(
+          icon: item.needsCheck ? Icons.flag_rounded : Icons.outlined_flag_rounded,
+          tooltip: item.needsCheck ? 'Marked to check' : 'Mark to check later',
+          color: item.needsCheck ? AppColors.wrong : AppColors.text,
+          onPressed: () => showCheckSheet(context, item),
+        ),
+        SquareIconButton(
           icon: item.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
           tooltip: item.isFavorite ? 'Remove from favourites' : 'Add to favourites',
           color: AppColors.streak,
@@ -210,6 +225,59 @@ class _HeaderActions extends ConsumerWidget {
           onPressed: () => _confirmDelete(context, ref),
         ),
       ],
+    );
+  }
+}
+
+/// „🚩 To check” sáv a részletező tetején: a megjegyzés, és egy gomb, amivel
+/// leveheted a jelölést, ha már utánanéztél.
+class _CheckBanner extends ConsumerWidget {
+  const _CheckBanner({required this.item});
+
+  final Item item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final note = item.checkNote;
+    return Material(
+      color: AppColors.wrongBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.wrongBorder),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => showCheckSheet(context, item),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+          child: Row(
+            spacing: 10,
+            children: [
+              const Icon(Icons.flag_rounded, size: 20, color: AppColors.wrong),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    const Text(
+                      'To check',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                    if (note != null)
+                      Text(note, style: const TextStyle(fontSize: 13, color: AppColors.wrongText)),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () =>
+                    ref.read(itemsRepositoryProvider).setNeedsCheck(item.id, needsCheck: false),
+                style: TextButton.styleFrom(foregroundColor: AppColors.accent),
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

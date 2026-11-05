@@ -45,6 +45,11 @@ final itemDetailProvider = StreamProvider.family<ItemDetail?, int>(
   (ref, id) => ref.watch(itemsRepositoryProvider).watchItemDetail(id),
 );
 
+/// Hány elem van „To check” jelöléssel.
+final needsCheckCountProvider = StreamProvider<int>(
+  (ref) => ref.watch(itemsRepositoryProvider).watchNeedsCheckCount(),
+);
+
 final tagsWithCountsProvider = StreamProvider<List<TagWithCount>>(
   (ref) => ref.watch(tagsRepositoryProvider).watchTagsWithCounts(),
 );
@@ -135,6 +140,31 @@ final reminderPlanProvider = Provider<({bool enabled, int minutes, bool practise
 final gameModeProvider = Provider<bool>(
   (ref) => ref.watch(settingsProvider).value?.gameMode ?? true,
 );
+
+/// A beállításokban ki-be kapcsolható szókártya-típusok (a mondatok külön feladatok).
+const selectableCardTypes = [ItemType.word, ItemType.phrase, ItemType.rule];
+
+/// „word,phrase,rule” → {word, phrase, rule}. Ismeretlen nevet kihagy; ha
+/// semmi sem marad, mindet visszaadja (üres kör ne lehessen).
+Set<ItemType> parseCardTypes(String raw) {
+  final byName = ItemType.values.asNameMap();
+  final types = {
+    for (final name in raw.split(','))
+      if (byName[name.trim()] case final type? when selectableCardTypes.contains(type)) type,
+  };
+  return types.isEmpty ? selectableCardTypes.toSet() : types;
+}
+
+String formatCardTypes(Set<ItemType> types) => [
+  for (final t in selectableCardTypes)
+    if (types.contains(t)) t.name,
+].join(',');
+
+/// Mely típusok jönnek szókártyaként (betöltés közben mind).
+final cardTypesProvider = Provider<Set<ItemType>>((ref) {
+  final raw = ref.watch(settingsProvider).value?.cardTypes;
+  return raw == null ? selectableCardTypes.toSet() : parseCardTypes(raw);
+});
 
 final progressStatsProvider = StreamProvider<ProgressStats>(
   (ref) => ref.watch(activityRepositoryProvider).watchProgress(),

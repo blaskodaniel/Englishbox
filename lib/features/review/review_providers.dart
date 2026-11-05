@@ -25,8 +25,19 @@ final reviewFocusProvider = NotifierProvider<ReviewFocusNotifier, ReviewFocus>(
   ReviewFocusNotifier.new,
 );
 
+/// A Focus kiegészítve a beállításokból: a szókártyákból kikapcsolt típusok
+/// (pl. csak szavakat akarsz gyakorolni) kimaradnak az ismétlésből.
+final effectiveReviewFocusProvider = Provider<ReviewFocus>((ref) {
+  final focus = ref.watch(reviewFocusProvider);
+  final cardTypes = ref.watch(cardTypesProvider);
+  return focus.withExcludedTypes({
+    for (final type in selectableCardTypes)
+      if (!cardTypes.contains(type)) type,
+  });
+});
+
 /// Az esedékes elemek a Focus szerint – élőben.
 final reviewDueProvider = StreamProvider<DueSummary>((ref) {
-  final focus = ref.watch(reviewFocusProvider);
+  final focus = ref.watch(effectiveReviewFocusProvider);
   return ref.watch(reviewRepositoryProvider).watchDue(focus);
 });

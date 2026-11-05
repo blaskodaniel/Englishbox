@@ -34,6 +34,12 @@ class Items extends Table {
   TextColumn get trapNote => text().nullable()();
 
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
+
+  /// „To check” – megjelölve, mert utána kell nézni (pl. ismétlés közben).
+  BoolColumn get needsCheck => boolean().withDefault(const Constant(false))();
+
+  /// Mi a kérdés vele – opcionális megjegyzés a jelöléshez.
+  TextColumn get checkNote => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -159,6 +165,9 @@ class AppSettings extends Table {
   /// Egy ismétlési kör hossza (elem).
   IntColumn get sessionLength => integer().withDefault(const Constant(10))();
   TextColumn get answerMode => textEnum<AnswerMode>().withDefault(const Constant('mix'))();
+
+  /// Mely típusok jönnek szókártyaként, vesszővel elválasztva („word,phrase,rule”).
+  TextColumn get cardTypes => text().withDefault(const Constant('word,phrase,rule'))();
   BoolColumn get gameMode => boolean().withDefault(const Constant(true))();
   BoolColumn get streakFreeze => boolean().withDefault(const Constant(true))();
   BoolColumn get reminderEnabled => boolean().withDefault(const Constant(true))();

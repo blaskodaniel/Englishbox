@@ -54,7 +54,7 @@ extension ItemTypeStyle on ItemType {
   String get label => switch (this) {
     ItemType.word => 'Word',
     ItemType.phrase => 'Phrase',
-    ItemType.rule => 'Rule',
+    ItemType.rule => 'Grammar',
     ItemType.sentence => 'Sentence',
   };
 

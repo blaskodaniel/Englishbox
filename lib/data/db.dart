@@ -32,7 +32,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'englishbox'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -42,9 +42,15 @@ class AppDatabase extends _$AppDatabase {
       await into(appSettings).insert(AppSettingsCompanion.insert());
     },
     // Meglévő adatbázis frissítése – mint egy SQL migrációs script.
-    // Az adatok megmaradnak, csak az új táblák jönnek létre.
+    // Az adatok megmaradnak, csak az új táblák / oszlopok jönnek létre.
     onUpgrade: (m, from, to) async {
       if (from < 2) await m.createTable(questClaims);
+      if (from < 3) {
+        // „To check” jelölés + mely típusok legyenek szókártyák.
+        await m.addColumn(items, items.needsCheck);
+        await m.addColumn(items, items.checkNote);
+        await m.addColumn(appSettings, appSettings.cardTypes);
+      }
     },
     beforeOpen: (details) async {
       // SQLite-ban a külső kulcsokat külön be kell kapcsolni.

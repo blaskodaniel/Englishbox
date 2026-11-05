@@ -88,6 +88,13 @@ class _FilterSheet extends ConsumerWidget {
               value: filter.favoritesOnly,
               onChanged: notifier.setFavoritesOnly,
             ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('To check only'),
+              subtitle: const Text('Items you marked to look up later'),
+              value: filter.needsCheckOnly,
+              onChanged: notifier.setNeedsCheckOnly,
+            ),
           ],
         ),
       ),

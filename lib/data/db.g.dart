@@ -139,6 +139,26 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
     defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("is_favorite" IN (0, 1))'),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _needsCheckMeta = const VerificationMeta('needsCheck');
+  @override
+  late final GeneratedColumn<bool> needsCheck = GeneratedColumn<bool>(
+    'needs_check',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('CHECK ("needs_check" IN (0, 1))'),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _checkNoteMeta = const VerificationMeta('checkNote');
+  @override
+  late final GeneratedColumn<String> checkNote = GeneratedColumn<String>(
+    'check_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta('createdAt');
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
@@ -175,6 +195,8 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
     formula,
     trapNote,
     isFavorite,
+    needsCheck,
+    checkNote,
     createdAt,
     updatedAt,
   ];
@@ -226,6 +248,18 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
       context.handle(
         _isFavoriteMeta,
         isFavorite.isAcceptableOrUnknown(data['is_favorite']!, _isFavoriteMeta),
+      );
+    }
+    if (data.containsKey('needs_check')) {
+      context.handle(
+        _needsCheckMeta,
+        needsCheck.isAcceptableOrUnknown(data['needs_check']!, _needsCheckMeta),
+      );
+    }
+    if (data.containsKey('check_note')) {
+      context.handle(
+        _checkNoteMeta,
+        checkNote.isAcceptableOrUnknown(data['check_note']!, _checkNoteMeta),
       );
     }
     if (data.containsKey('created_at')) {
@@ -300,6 +334,14 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_favorite'],
       )!,
+      needsCheck: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}needs_check'],
+      )!,
+      checkNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}check_note'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -360,6 +402,12 @@ class Item extends DataClass implements Insertable<Item> {
   /// „Magyar csapda” megjegyzés szabályokhoz.
   final String? trapNote;
   final bool isFavorite;
+
+  /// „To check” – megjelölve, mert utána kell nézni (pl. ismétlés közben).
+  final bool needsCheck;
+
+  /// Mi a kérdés vele – opcionális megjegyzés a jelöléshez.
+  final String? checkNote;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Item({
@@ -377,6 +425,8 @@ class Item extends DataClass implements Insertable<Item> {
     required this.formula,
     this.trapNote,
     required this.isFavorite,
+    required this.needsCheck,
+    this.checkNote,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -419,6 +469,10 @@ class Item extends DataClass implements Insertable<Item> {
       map['trap_note'] = Variable<String>(trapNote);
     }
     map['is_favorite'] = Variable<bool>(isFavorite);
+    map['needs_check'] = Variable<bool>(needsCheck);
+    if (!nullToAbsent || checkNote != null) {
+      map['check_note'] = Variable<String>(checkNote);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -444,6 +498,8 @@ class Item extends DataClass implements Insertable<Item> {
       formula: Value(formula),
       trapNote: trapNote == null && nullToAbsent ? const Value.absent() : Value(trapNote),
       isFavorite: Value(isFavorite),
+      needsCheck: Value(needsCheck),
+      checkNote: checkNote == null && nullToAbsent ? const Value.absent() : Value(checkNote),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -470,6 +526,8 @@ class Item extends DataClass implements Insertable<Item> {
       formula: serializer.fromJson<List<FormulaBlock>>(json['formula']),
       trapNote: serializer.fromJson<String?>(json['trapNote']),
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
+      needsCheck: serializer.fromJson<bool>(json['needsCheck']),
+      checkNote: serializer.fromJson<String?>(json['checkNote']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -496,6 +554,8 @@ class Item extends DataClass implements Insertable<Item> {
       'formula': serializer.toJson<List<FormulaBlock>>(formula),
       'trapNote': serializer.toJson<String?>(trapNote),
       'isFavorite': serializer.toJson<bool>(isFavorite),
+      'needsCheck': serializer.toJson<bool>(needsCheck),
+      'checkNote': serializer.toJson<String?>(checkNote),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -516,6 +576,8 @@ class Item extends DataClass implements Insertable<Item> {
     List<FormulaBlock>? formula,
     Value<String?> trapNote = const Value.absent(),
     bool? isFavorite,
+    bool? needsCheck,
+    Value<String?> checkNote = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Item(
@@ -533,6 +595,8 @@ class Item extends DataClass implements Insertable<Item> {
     formula: formula ?? this.formula,
     trapNote: trapNote.present ? trapNote.value : this.trapNote,
     isFavorite: isFavorite ?? this.isFavorite,
+    needsCheck: needsCheck ?? this.needsCheck,
+    checkNote: checkNote.present ? checkNote.value : this.checkNote,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -552,6 +616,8 @@ class Item extends DataClass implements Insertable<Item> {
       formula: data.formula.present ? data.formula.value : this.formula,
       trapNote: data.trapNote.present ? data.trapNote.value : this.trapNote,
       isFavorite: data.isFavorite.present ? data.isFavorite.value : this.isFavorite,
+      needsCheck: data.needsCheck.present ? data.needsCheck.value : this.needsCheck,
+      checkNote: data.checkNote.present ? data.checkNote.value : this.checkNote,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -574,6 +640,8 @@ class Item extends DataClass implements Insertable<Item> {
           ..write('formula: $formula, ')
           ..write('trapNote: $trapNote, ')
           ..write('isFavorite: $isFavorite, ')
+          ..write('needsCheck: $needsCheck, ')
+          ..write('checkNote: $checkNote, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -596,6 +664,8 @@ class Item extends DataClass implements Insertable<Item> {
     formula,
     trapNote,
     isFavorite,
+    needsCheck,
+    checkNote,
     createdAt,
     updatedAt,
   );
@@ -617,6 +687,8 @@ class Item extends DataClass implements Insertable<Item> {
           other.formula == this.formula &&
           other.trapNote == this.trapNote &&
           other.isFavorite == this.isFavorite &&
+          other.needsCheck == this.needsCheck &&
+          other.checkNote == this.checkNote &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -636,6 +708,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
   final Value<List<FormulaBlock>> formula;
   final Value<String?> trapNote;
   final Value<bool> isFavorite;
+  final Value<bool> needsCheck;
+  final Value<String?> checkNote;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const ItemsCompanion({
@@ -653,6 +727,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.formula = const Value.absent(),
     this.trapNote = const Value.absent(),
     this.isFavorite = const Value.absent(),
+    this.needsCheck = const Value.absent(),
+    this.checkNote = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -671,6 +747,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.formula = const Value.absent(),
     this.trapNote = const Value.absent(),
     this.isFavorite = const Value.absent(),
+    this.needsCheck = const Value.absent(),
+    this.checkNote = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : type = Value(type),
@@ -690,6 +768,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Expression<String>? formula,
     Expression<String>? trapNote,
     Expression<bool>? isFavorite,
+    Expression<bool>? needsCheck,
+    Expression<String>? checkNote,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -708,6 +788,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       if (formula != null) 'formula': formula,
       if (trapNote != null) 'trap_note': trapNote,
       if (isFavorite != null) 'is_favorite': isFavorite,
+      if (needsCheck != null) 'needs_check': needsCheck,
+      if (checkNote != null) 'check_note': checkNote,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -728,6 +810,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Value<List<FormulaBlock>>? formula,
     Value<String?>? trapNote,
     Value<bool>? isFavorite,
+    Value<bool>? needsCheck,
+    Value<String?>? checkNote,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -746,6 +830,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       formula: formula ?? this.formula,
       trapNote: trapNote ?? this.trapNote,
       isFavorite: isFavorite ?? this.isFavorite,
+      needsCheck: needsCheck ?? this.needsCheck,
+      checkNote: checkNote ?? this.checkNote,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -800,6 +886,12 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     if (isFavorite.present) {
       map['is_favorite'] = Variable<bool>(isFavorite.value);
     }
+    if (needsCheck.present) {
+      map['needs_check'] = Variable<bool>(needsCheck.value);
+    }
+    if (checkNote.present) {
+      map['check_note'] = Variable<String>(checkNote.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -826,6 +918,8 @@ class ItemsCompanion extends UpdateCompanion<Item> {
           ..write('formula: $formula, ')
           ..write('trapNote: $trapNote, ')
           ..write('isFavorite: $isFavorite, ')
+          ..write('needsCheck: $needsCheck, ')
+          ..write('checkNote: $checkNote, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -3671,6 +3765,16 @@ class $AppSettingsTable extends AppSettings with TableInfo<$AppSettingsTable, Se
         requiredDuringInsert: false,
         defaultValue: const Constant('mix'),
       ).withConverter<AnswerMode>($AppSettingsTable.$converteranswerMode);
+  static const VerificationMeta _cardTypesMeta = const VerificationMeta('cardTypes');
+  @override
+  late final GeneratedColumn<String> cardTypes = GeneratedColumn<String>(
+    'card_types',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('word,phrase,rule'),
+  );
   static const VerificationMeta _gameModeMeta = const VerificationMeta('gameMode');
   @override
   late final GeneratedColumn<bool> gameMode = GeneratedColumn<bool>(
@@ -3751,6 +3855,7 @@ class $AppSettingsTable extends AppSettings with TableInfo<$AppSettingsTable, Se
     dailyGoal,
     sessionLength,
     answerMode,
+    cardTypes,
     gameMode,
     streakFreeze,
     reminderEnabled,
@@ -3787,6 +3892,12 @@ class $AppSettingsTable extends AppSettings with TableInfo<$AppSettingsTable, Se
       context.handle(
         _sessionLengthMeta,
         sessionLength.isAcceptableOrUnknown(data['session_length']!, _sessionLengthMeta),
+      );
+    }
+    if (data.containsKey('card_types')) {
+      context.handle(
+        _cardTypesMeta,
+        cardTypes.isAcceptableOrUnknown(data['card_types']!, _cardTypesMeta),
       );
     }
     if (data.containsKey('game_mode')) {
@@ -3859,6 +3970,10 @@ class $AppSettingsTable extends AppSettings with TableInfo<$AppSettingsTable, Se
           data['${effectivePrefix}answer_mode'],
         )!,
       ),
+      cardTypes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}card_types'],
+      )!,
       gameMode: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}game_mode'],
@@ -3920,6 +4035,9 @@ class Settings extends DataClass implements Insertable<Settings> {
   /// Egy ismétlési kör hossza (elem).
   final int sessionLength;
   final AnswerMode answerMode;
+
+  /// Mely típusok jönnek szókártyaként, vesszővel elválasztva („word,phrase,rule”).
+  final String cardTypes;
   final bool gameMode;
   final bool streakFreeze;
   final bool reminderEnabled;
@@ -3937,6 +4055,7 @@ class Settings extends DataClass implements Insertable<Settings> {
     required this.dailyGoal,
     required this.sessionLength,
     required this.answerMode,
+    required this.cardTypes,
     required this.gameMode,
     required this.streakFreeze,
     required this.reminderEnabled,
@@ -3963,6 +4082,7 @@ class Settings extends DataClass implements Insertable<Settings> {
         $AppSettingsTable.$converteranswerMode.toSql(answerMode),
       );
     }
+    map['card_types'] = Variable<String>(cardTypes);
     map['game_mode'] = Variable<bool>(gameMode);
     map['streak_freeze'] = Variable<bool>(streakFreeze);
     map['reminder_enabled'] = Variable<bool>(reminderEnabled);
@@ -3990,6 +4110,7 @@ class Settings extends DataClass implements Insertable<Settings> {
       dailyGoal: Value(dailyGoal),
       sessionLength: Value(sessionLength),
       answerMode: Value(answerMode),
+      cardTypes: Value(cardTypes),
       gameMode: Value(gameMode),
       streakFreeze: Value(streakFreeze),
       reminderEnabled: Value(reminderEnabled),
@@ -4018,6 +4139,7 @@ class Settings extends DataClass implements Insertable<Settings> {
       answerMode: $AppSettingsTable.$converteranswerMode.fromJson(
         serializer.fromJson<String>(json['answerMode']),
       ),
+      cardTypes: serializer.fromJson<String>(json['cardTypes']),
       gameMode: serializer.fromJson<bool>(json['gameMode']),
       streakFreeze: serializer.fromJson<bool>(json['streakFreeze']),
       reminderEnabled: serializer.fromJson<bool>(json['reminderEnabled']),
@@ -4046,6 +4168,7 @@ class Settings extends DataClass implements Insertable<Settings> {
       'answerMode': serializer.toJson<String>(
         $AppSettingsTable.$converteranswerMode.toJson(answerMode),
       ),
+      'cardTypes': serializer.toJson<String>(cardTypes),
       'gameMode': serializer.toJson<bool>(gameMode),
       'streakFreeze': serializer.toJson<bool>(streakFreeze),
       'reminderEnabled': serializer.toJson<bool>(reminderEnabled),
@@ -4066,6 +4189,7 @@ class Settings extends DataClass implements Insertable<Settings> {
     int? dailyGoal,
     int? sessionLength,
     AnswerMode? answerMode,
+    String? cardTypes,
     bool? gameMode,
     bool? streakFreeze,
     bool? reminderEnabled,
@@ -4081,6 +4205,7 @@ class Settings extends DataClass implements Insertable<Settings> {
     dailyGoal: dailyGoal ?? this.dailyGoal,
     sessionLength: sessionLength ?? this.sessionLength,
     answerMode: answerMode ?? this.answerMode,
+    cardTypes: cardTypes ?? this.cardTypes,
     gameMode: gameMode ?? this.gameMode,
     streakFreeze: streakFreeze ?? this.streakFreeze,
     reminderEnabled: reminderEnabled ?? this.reminderEnabled,
@@ -4098,6 +4223,7 @@ class Settings extends DataClass implements Insertable<Settings> {
       dailyGoal: data.dailyGoal.present ? data.dailyGoal.value : this.dailyGoal,
       sessionLength: data.sessionLength.present ? data.sessionLength.value : this.sessionLength,
       answerMode: data.answerMode.present ? data.answerMode.value : this.answerMode,
+      cardTypes: data.cardTypes.present ? data.cardTypes.value : this.cardTypes,
       gameMode: data.gameMode.present ? data.gameMode.value : this.gameMode,
       streakFreeze: data.streakFreeze.present ? data.streakFreeze.value : this.streakFreeze,
       reminderEnabled: data.reminderEnabled.present
@@ -4122,6 +4248,7 @@ class Settings extends DataClass implements Insertable<Settings> {
           ..write('dailyGoal: $dailyGoal, ')
           ..write('sessionLength: $sessionLength, ')
           ..write('answerMode: $answerMode, ')
+          ..write('cardTypes: $cardTypes, ')
           ..write('gameMode: $gameMode, ')
           ..write('streakFreeze: $streakFreeze, ')
           ..write('reminderEnabled: $reminderEnabled, ')
@@ -4142,6 +4269,7 @@ class Settings extends DataClass implements Insertable<Settings> {
     dailyGoal,
     sessionLength,
     answerMode,
+    cardTypes,
     gameMode,
     streakFreeze,
     reminderEnabled,
@@ -4161,6 +4289,7 @@ class Settings extends DataClass implements Insertable<Settings> {
           other.dailyGoal == this.dailyGoal &&
           other.sessionLength == this.sessionLength &&
           other.answerMode == this.answerMode &&
+          other.cardTypes == this.cardTypes &&
           other.gameMode == this.gameMode &&
           other.streakFreeze == this.streakFreeze &&
           other.reminderEnabled == this.reminderEnabled &&
@@ -4178,6 +4307,7 @@ class AppSettingsCompanion extends UpdateCompanion<Settings> {
   final Value<int> dailyGoal;
   final Value<int> sessionLength;
   final Value<AnswerMode> answerMode;
+  final Value<String> cardTypes;
   final Value<bool> gameMode;
   final Value<bool> streakFreeze;
   final Value<bool> reminderEnabled;
@@ -4193,6 +4323,7 @@ class AppSettingsCompanion extends UpdateCompanion<Settings> {
     this.dailyGoal = const Value.absent(),
     this.sessionLength = const Value.absent(),
     this.answerMode = const Value.absent(),
+    this.cardTypes = const Value.absent(),
     this.gameMode = const Value.absent(),
     this.streakFreeze = const Value.absent(),
     this.reminderEnabled = const Value.absent(),
@@ -4209,6 +4340,7 @@ class AppSettingsCompanion extends UpdateCompanion<Settings> {
     this.dailyGoal = const Value.absent(),
     this.sessionLength = const Value.absent(),
     this.answerMode = const Value.absent(),
+    this.cardTypes = const Value.absent(),
     this.gameMode = const Value.absent(),
     this.streakFreeze = const Value.absent(),
     this.reminderEnabled = const Value.absent(),
@@ -4225,6 +4357,7 @@ class AppSettingsCompanion extends UpdateCompanion<Settings> {
     Expression<int>? dailyGoal,
     Expression<int>? sessionLength,
     Expression<String>? answerMode,
+    Expression<String>? cardTypes,
     Expression<bool>? gameMode,
     Expression<bool>? streakFreeze,
     Expression<bool>? reminderEnabled,
@@ -4241,6 +4374,7 @@ class AppSettingsCompanion extends UpdateCompanion<Settings> {
       if (dailyGoal != null) 'daily_goal': dailyGoal,
       if (sessionLength != null) 'session_length': sessionLength,
       if (answerMode != null) 'answer_mode': answerMode,
+      if (cardTypes != null) 'card_types': cardTypes,
       if (gameMode != null) 'game_mode': gameMode,
       if (streakFreeze != null) 'streak_freeze': streakFreeze,
       if (reminderEnabled != null) 'reminder_enabled': reminderEnabled,
@@ -4259,6 +4393,7 @@ class AppSettingsCompanion extends UpdateCompanion<Settings> {
     Value<int>? dailyGoal,
     Value<int>? sessionLength,
     Value<AnswerMode>? answerMode,
+    Value<String>? cardTypes,
     Value<bool>? gameMode,
     Value<bool>? streakFreeze,
     Value<bool>? reminderEnabled,
@@ -4275,6 +4410,7 @@ class AppSettingsCompanion extends UpdateCompanion<Settings> {
       dailyGoal: dailyGoal ?? this.dailyGoal,
       sessionLength: sessionLength ?? this.sessionLength,
       answerMode: answerMode ?? this.answerMode,
+      cardTypes: cardTypes ?? this.cardTypes,
       gameMode: gameMode ?? this.gameMode,
       streakFreeze: streakFreeze ?? this.streakFreeze,
       reminderEnabled: reminderEnabled ?? this.reminderEnabled,
@@ -4315,6 +4451,9 @@ class AppSettingsCompanion extends UpdateCompanion<Settings> {
         $AppSettingsTable.$converteranswerMode.toSql(answerMode.value),
       );
     }
+    if (cardTypes.present) {
+      map['card_types'] = Variable<String>(cardTypes.value);
+    }
     if (gameMode.present) {
       map['game_mode'] = Variable<bool>(gameMode.value);
     }
@@ -4351,6 +4490,7 @@ class AppSettingsCompanion extends UpdateCompanion<Settings> {
           ..write('dailyGoal: $dailyGoal, ')
           ..write('sessionLength: $sessionLength, ')
           ..write('answerMode: $answerMode, ')
+          ..write('cardTypes: $cardTypes, ')
           ..write('gameMode: $gameMode, ')
           ..write('streakFreeze: $streakFreeze, ')
           ..write('reminderEnabled: $reminderEnabled, ')
@@ -4456,6 +4596,8 @@ typedef $$ItemsTableCreateCompanionBuilder = ItemsCompanion Function({
   Value<List<FormulaBlock>> formula,
   Value<String?> trapNote,
   Value<bool> isFavorite,
+  Value<bool> needsCheck,
+  Value<String?> checkNote,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
 });
@@ -4474,6 +4616,8 @@ typedef $$ItemsTableUpdateCompanionBuilder = ItemsCompanion Function({
   Value<List<FormulaBlock>> formula,
   Value<String?> trapNote,
   Value<bool> isFavorite,
+  Value<bool> needsCheck,
+  Value<String?> checkNote,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
 });
@@ -4663,6 +4807,12 @@ class $$ItemsTableFilterComposer extends Composer<_$AppDatabase, $ItemsTable> {
 
   ColumnFilters<bool> get isFavorite =>
       $composableBuilder(column: $table.isFavorite, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get needsCheck =>
+      $composableBuilder(column: $table.needsCheck, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get checkNote =>
+      $composableBuilder(column: $table.checkNote, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -4871,6 +5021,12 @@ class $$ItemsTableOrderingComposer extends Composer<_$AppDatabase, $ItemsTable> 
   ColumnOrderings<bool> get isFavorite =>
       $composableBuilder(column: $table.isFavorite, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get needsCheck =>
+      $composableBuilder(column: $table.needsCheck, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get checkNote =>
+      $composableBuilder(column: $table.checkNote, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -4926,6 +5082,12 @@ class $$ItemsTableAnnotationComposer extends Composer<_$AppDatabase, $ItemsTable
 
   GeneratedColumn<bool> get isFavorite =>
       $composableBuilder(column: $table.isFavorite, builder: (column) => column);
+
+  GeneratedColumn<bool> get needsCheck =>
+      $composableBuilder(column: $table.needsCheck, builder: (column) => column);
+
+  GeneratedColumn<String> get checkNote =>
+      $composableBuilder(column: $table.checkNote, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -5142,6 +5304,8 @@ class $$ItemsTableTableManager
                 Value<List<FormulaBlock>> formula = const Value.absent(),
                 Value<String?> trapNote = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
+                Value<bool> needsCheck = const Value.absent(),
+                Value<String?> checkNote = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => ItemsCompanion(
@@ -5159,6 +5323,8 @@ class $$ItemsTableTableManager
                 formula: formula,
                 trapNote: trapNote,
                 isFavorite: isFavorite,
+                needsCheck: needsCheck,
+                checkNote: checkNote,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -5178,6 +5344,8 @@ class $$ItemsTableTableManager
                 Value<List<FormulaBlock>> formula = const Value.absent(),
                 Value<String?> trapNote = const Value.absent(),
                 Value<bool> isFavorite = const Value.absent(),
+                Value<bool> needsCheck = const Value.absent(),
+                Value<String?> checkNote = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => ItemsCompanion.insert(
@@ -5195,6 +5363,8 @@ class $$ItemsTableTableManager
                 formula: formula,
                 trapNote: trapNote,
                 isFavorite: isFavorite,
+                needsCheck: needsCheck,
+                checkNote: checkNote,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -7965,6 +8135,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder = AppSettingsCompanion Function
   Value<int> dailyGoal,
   Value<int> sessionLength,
   Value<AnswerMode> answerMode,
+  Value<String> cardTypes,
   Value<bool> gameMode,
   Value<bool> streakFreeze,
   Value<bool> reminderEnabled,
@@ -7981,6 +8152,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder = AppSettingsCompanion Function
   Value<int> dailyGoal,
   Value<int> sessionLength,
   Value<AnswerMode> answerMode,
+  Value<String> cardTypes,
   Value<bool> gameMode,
   Value<bool> streakFreeze,
   Value<bool> reminderEnabled,
@@ -8025,6 +8197,9 @@ class $$AppSettingsTableFilterComposer extends Composer<_$AppDatabase, $AppSetti
         column: $table.answerMode,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
+
+  ColumnFilters<String> get cardTypes =>
+      $composableBuilder(column: $table.cardTypes, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get gameMode =>
       $composableBuilder(column: $table.gameMode, builder: (column) => ColumnFilters(column));
@@ -8088,6 +8263,9 @@ class $$AppSettingsTableOrderingComposer extends Composer<_$AppDatabase, $AppSet
   ColumnOrderings<String> get answerMode =>
       $composableBuilder(column: $table.answerMode, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get cardTypes =>
+      $composableBuilder(column: $table.cardTypes, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get gameMode =>
       $composableBuilder(column: $table.gameMode, builder: (column) => ColumnOrderings(column));
 
@@ -8141,6 +8319,9 @@ class $$AppSettingsTableAnnotationComposer extends Composer<_$AppDatabase, $AppS
 
   GeneratedColumnWithTypeConverter<AnswerMode, String> get answerMode =>
       $composableBuilder(column: $table.answerMode, builder: (column) => column);
+
+  GeneratedColumn<String> get cardTypes =>
+      $composableBuilder(column: $table.cardTypes, builder: (column) => column);
 
   GeneratedColumn<bool> get gameMode =>
       $composableBuilder(column: $table.gameMode, builder: (column) => column);
@@ -8197,6 +8378,7 @@ class $$AppSettingsTableTableManager
                 Value<int> dailyGoal = const Value.absent(),
                 Value<int> sessionLength = const Value.absent(),
                 Value<AnswerMode> answerMode = const Value.absent(),
+                Value<String> cardTypes = const Value.absent(),
                 Value<bool> gameMode = const Value.absent(),
                 Value<bool> streakFreeze = const Value.absent(),
                 Value<bool> reminderEnabled = const Value.absent(),
@@ -8212,6 +8394,7 @@ class $$AppSettingsTableTableManager
                 dailyGoal: dailyGoal,
                 sessionLength: sessionLength,
                 answerMode: answerMode,
+                cardTypes: cardTypes,
                 gameMode: gameMode,
                 streakFreeze: streakFreeze,
                 reminderEnabled: reminderEnabled,
@@ -8229,6 +8412,7 @@ class $$AppSettingsTableTableManager
                 Value<int> dailyGoal = const Value.absent(),
                 Value<int> sessionLength = const Value.absent(),
                 Value<AnswerMode> answerMode = const Value.absent(),
+                Value<String> cardTypes = const Value.absent(),
                 Value<bool> gameMode = const Value.absent(),
                 Value<bool> streakFreeze = const Value.absent(),
                 Value<bool> reminderEnabled = const Value.absent(),
@@ -8244,6 +8428,7 @@ class $$AppSettingsTableTableManager
                 dailyGoal: dailyGoal,
                 sessionLength: sessionLength,
                 answerMode: answerMode,
+                cardTypes: cardTypes,
                 gameMode: gameMode,
                 streakFreeze: streakFreeze,
                 reminderEnabled: reminderEnabled,

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/labels.dart';
 import '../../../app/theme.dart';
 import '../../../domain/enums.dart';
 import '../../../domain/note_markup.dart';
 import '../../../domain/srs.dart';
+import '../../../data/db.dart';
+import '../../../data/providers.dart';
+import '../../../widgets/check_sheet.dart';
 import '../../../widgets/chunky_button.dart';
 import '../../../widgets/highlighted_text.dart';
 import '../review_session.dart';
@@ -89,18 +93,25 @@ class _WordCardTaskState extends State<WordCardTask> {
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          spacing: 14,
-                          children: [
-                            _badges(darkOnType),
-                            ..._front(darkOnType),
-                            if (_flipped) _back(),
-                          ],
+                    // Stack: a kártya tartalma középen, a zászló a jobb felső sarokban
+                    // (mint egy `position: absolute` elem).
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+                            child: Column(
+                              spacing: 14,
+                              children: [
+                                _badges(darkOnType),
+                                ..._front(darkOnType),
+                                if (_flipped) _back(),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                        Positioned(top: 10, right: 10, child: _CheckFlag(item: item)),
+                      ],
                     ),
                   ),
                 ),
@@ -263,6 +274,32 @@ class _WordCardTaskState extends State<WordCardTask> {
         border: Border(top: BorderSide(color: item.type.softBorder, width: 2)),
       ),
       child: Column(spacing: 10, children: children),
+    );
+  }
+}
+
+/// 🚩 „Mark to check” – ha nem vagy biztos benne, megjelölöd, és később
+/// utánanézel. A kártya csak egy pillanatkép az elemről, ezért az aktuális
+/// állapotot élőben figyeljük (`ref.watch`), így jelölés után rögtön átvált.
+class _CheckFlag extends ConsumerWidget {
+  const _CheckFlag({required this.item});
+
+  final Item item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final live = ref.watch(itemDetailProvider(item.id)).value?.item ?? item;
+    final flagged = live.needsCheck;
+    return IconButton(
+      tooltip: flagged ? 'Marked to check' : 'Mark to check later',
+      onPressed: () => showCheckSheet(context, live),
+      style: IconButton.styleFrom(
+        backgroundColor: flagged ? AppColors.wrongBg : Colors.black.withValues(alpha: 0.18),
+      ),
+      icon: Icon(
+        flagged ? Icons.flag_rounded : Icons.outlined_flag_rounded,
+        color: flagged ? AppColors.wrong : AppColors.textSoft,
+      ),
     );
   }
 }

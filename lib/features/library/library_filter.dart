@@ -15,6 +15,7 @@ class LibraryFilter {
     this.collectionId,
     this.collectionName,
     this.favoritesOnly = false,
+    this.needsCheckOnly = false,
     this.search = '',
   });
 
@@ -25,11 +26,14 @@ class LibraryFilter {
   final int? collectionId;
   final String? collectionName;
   final bool favoritesOnly;
+
+  /// Csak a „To check” jelölésű elemek.
+  final bool needsCheckOnly;
   final String search;
 
   /// Van-e a típuson és a keresésen kívül aktív szűrő (a szűrőgomb jelzéséhez).
   bool get hasExtraFilters =>
-      level != null || tagId != null || collectionId != null || favoritesOnly;
+      level != null || tagId != null || collectionId != null || favoritesOnly || needsCheckOnly;
 
   bool get isEmpty => type == null && !hasExtraFilters && search.trim().isEmpty;
 }
@@ -45,6 +49,7 @@ class LibraryFilterNotifier extends Notifier<LibraryFilter> {
     (int, String)? Function()? tag,
     (int, String)? Function()? collection,
     bool? favoritesOnly,
+    bool? needsCheckOnly,
     String? search,
   }) {
     final s = state;
@@ -60,6 +65,7 @@ class LibraryFilterNotifier extends Notifier<LibraryFilter> {
       collectionId: newCollection?.$1,
       collectionName: newCollection?.$2,
       favoritesOnly: favoritesOnly ?? s.favoritesOnly,
+      needsCheckOnly: needsCheckOnly ?? s.needsCheckOnly,
       search: search ?? s.search,
     );
   }
@@ -75,6 +81,8 @@ class LibraryFilterNotifier extends Notifier<LibraryFilter> {
       state = _copy(collection: () => id == null ? null : (id, name ?? ''));
 
   void setFavoritesOnly(bool value) => state = _copy(favoritesOnly: value);
+
+  void setNeedsCheckOnly(bool value) => state = _copy(needsCheckOnly: value);
 
   void setSearch(String search) => state = _copy(search: search);
 
@@ -98,6 +106,7 @@ final libraryItemsProvider = StreamProvider<List<ItemListEntry>>((ref) {
         tagId: filter.tagId,
         collectionId: filter.collectionId,
         favoritesOnly: filter.favoritesOnly,
+        needsCheckOnly: filter.needsCheckOnly,
         search: filter.search,
       );
 });

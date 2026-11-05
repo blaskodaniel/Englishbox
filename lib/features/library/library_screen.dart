@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/labels.dart';
 import '../../app/theme.dart';
+import '../../data/providers.dart';
 import '../../domain/enums.dart';
 import '../../widgets/chunky_button.dart';
 import 'library_filter.dart';
@@ -35,6 +36,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       if (_search.text != search) _search.text = search;
     });
     final itemsAsync = ref.watch(libraryItemsProvider);
+    final toCheck = ref.watch(needsCheckCountProvider).value ?? 0;
     // Frissítés közben az előző lista marad látható (nincs villogás gépelés közben).
     final entries = itemsAsync.value;
 
@@ -97,6 +99,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   const SizedBox(height: 14),
                   _TypeChips(selected: filter.type, onSelected: notifier.setType),
                   const SizedBox(height: 10),
+                  // „🚩 5 items to check” – egy koppintással csak a megjelöltek.
+                  if (toCheck > 0 || filter.needsCheckOnly) ...[
+                    _ToCheckBanner(
+                      count: toCheck,
+                      active: filter.needsCheckOnly,
+                      onTap: () => notifier.setNeedsCheckOnly(!filter.needsCheckOnly),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   _FilterSummary(filter: filter, onTap: () => showLibraryFilterSheet(context)),
                   const SizedBox(height: 8),
                 ],
@@ -216,6 +227,7 @@ class _FilterSummary extends StatelessWidget {
       filter.level?.label ?? 'All levels',
       if (filter.tagName != null) '#${filter.tagName}',
       if (filter.favoritesOnly) '★',
+      if (filter.needsCheckOnly) 'To check',
     ];
     final color = filter.hasExtraFilters ? AppColors.accent : AppColors.textMuted;
 
@@ -239,6 +251,52 @@ class _FilterSummary extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ToCheckBanner extends StatelessWidget {
+  const _ToCheckBanner({required this.count, required this.active, required this.onTap});
+
+  final int count;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: active ? AppColors.wrongBg : AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: active ? AppColors.wrong : AppColors.border, width: active ? 2 : 1),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            spacing: 10,
+            children: [
+              const Icon(Icons.flag_rounded, size: 20, color: AppColors.wrong),
+              Expanded(
+                child: Text(
+                  count == 1 ? '1 item to check' : '$count items to check',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ),
+              Text(
+                active ? 'Show all' : 'Show',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.wrong,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

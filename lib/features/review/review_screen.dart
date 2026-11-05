@@ -45,6 +45,15 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     final focus = ref.watch(reviewFocusProvider);
     final streak = ref.watch(streakProvider);
     final sessionLength = ref.watch(settingsProvider).value?.sessionLength ?? 10;
+    final cardTypes = ref.watch(cardTypesProvider);
+    final cardsSubtitle = [
+      [
+        if (cardTypes.contains(ItemType.word)) 'words',
+        if (cardTypes.contains(ItemType.phrase)) 'phrases',
+        if (cardTypes.contains(ItemType.rule)) 'grammar',
+      ].join(', ').replaceFirst(RegExp(r', (?=[^,]*$)'), ' & '),
+      'EN ↔ HU',
+    ].join(' · ');
 
     return Scaffold(
       body: SafeArea(
@@ -93,7 +102,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   _TaskTile(
                     icon: Icons.style_outlined,
                     title: 'Word cards',
-                    subtitle: 'Words, phrases & grammar · EN ↔ HU',
+                    // Pl. „Words & phrases · EN ↔ HU” – a beállítás szerint.
+                    subtitle: cardsSubtitle[0].toUpperCase() + cardsSubtitle.substring(1),
                     color: AppColors.word,
                     background: AppColors.wordBg,
                     count: due?.cardEntries.length ?? 0,
@@ -161,13 +171,11 @@ class _DueCard extends StatelessWidget {
   Widget build(BuildContext context) {
     String plural(int n, String one) => n == 1 ? '1 $one' : '$n ${one}s';
     final breakdown = [
-      for (final (type, name) in const [
-        (ItemType.word, 'word'),
-        (ItemType.phrase, 'phrase'),
-        (ItemType.rule, 'rule'),
-        (ItemType.sentence, 'sentence'),
-      ])
-        if (due.count(type) > 0) plural(due.count(type), name),
+      if (due.count(ItemType.word) > 0) plural(due.count(ItemType.word), 'word'),
+      if (due.count(ItemType.phrase) > 0) plural(due.count(ItemType.phrase), 'phrase'),
+      // A „grammar” megszámlálhatatlan – nincs „grammars”.
+      if (due.count(ItemType.rule) > 0) '${due.count(ItemType.rule)} grammar',
+      if (due.count(ItemType.sentence) > 0) plural(due.count(ItemType.sentence), 'sentence'),
     ];
 
     return Container(

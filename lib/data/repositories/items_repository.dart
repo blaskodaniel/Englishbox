@@ -24,6 +24,7 @@ class ItemsRepository {
     int? tagId,
     int? collectionId,
     bool favoritesOnly = false,
+    bool needsCheckOnly = false,
     String search = '',
   }) {
     final query = _db.select(_db.items).join([
@@ -33,6 +34,7 @@ class ItemsRepository {
     if (type != null) query.where(_db.items.type.equalsValue(type));
     if (level != null) query.where(_db.items.level.equalsValue(level));
     if (favoritesOnly) query.where(_db.items.isFavorite.equals(true));
+    if (needsCheckOnly) query.where(_db.items.needsCheck.equals(true));
     if (tagId != null) {
       final tagged = _db.selectOnly(_db.itemTags)
         ..addColumns([_db.itemTags.itemId])
@@ -383,6 +385,26 @@ class ItemsRepository {
           ItemLinksCompanion.insert(parentId: parentId, childId: childId, role: role),
           mode: InsertMode.insertOrIgnore,
         );
+  }
+
+  /// „To check” jelölés be/ki, opcionális megjegyzéssel. Levételkor a
+  /// megjegyzés is törlődik.
+  Future<void> setNeedsCheck(int id, {required bool needsCheck, String? note}) async {
+    await (_db.update(_db.items)..where((i) => i.id.equals(id))).write(
+      ItemsCompanion(
+        needsCheck: Value(needsCheck),
+        checkNote: Value(needsCheck ? _blankToNull(note) : null),
+      ),
+    );
+  }
+
+  /// Hány elem vár ellenőrzésre – a Library sávjához.
+  Stream<int> watchNeedsCheckCount() {
+    final count = _db.items.id.count();
+    final query = _db.selectOnly(_db.items)
+      ..addColumns([count])
+      ..where(_db.items.needsCheck.equals(true));
+    return query.watchSingle().map((row) => row.read(count) ?? 0);
   }
 
   Future<void> toggleFavorite(int id) async {

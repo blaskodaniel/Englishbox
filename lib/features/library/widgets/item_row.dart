@@ -65,6 +65,13 @@ class ItemRow extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (item.needsCheck)
+                  const Center(
+                    child: Tooltip(
+                      message: 'To check',
+                      child: Icon(Icons.flag_rounded, size: 18, color: AppColors.wrong),
+                    ),
+                  ),
                 Center(
                   child: entry.mastery == Mastery.mastered
                       ? const _MasteredPill()
