@@ -18,11 +18,7 @@ class TypeSelector extends StatelessWidget {
       children: [
         for (final type in ItemType.values)
           Expanded(
-            child: _TypeTile(
-              type: type,
-              selected: type == value,
-              onTap: () => onChanged(type),
-            ),
+            child: _TypeTile(type: type, selected: type == value, onTap: () => onChanged(type)),
           ),
       ],
     );
@@ -49,13 +45,8 @@ class _TypeTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? type.background : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? type.color : AppColors.borderStrong,
-              width: 2,
-            ),
-            boxShadow: [
-              if (selected) BoxShadow(color: type.color, offset: const Offset(0, 3)),
-            ],
+            border: Border.all(color: selected ? type.color : AppColors.borderStrong, width: 2),
+            boxShadow: [if (selected) BoxShadow(color: type.color, offset: const Offset(0, 3))],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

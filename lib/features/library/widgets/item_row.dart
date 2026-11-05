@@ -119,8 +119,7 @@ class _TitleLine extends StatelessWidget {
               ),
             ),
           ),
-        if (item.isFavorite)
-          const Icon(Icons.star_rounded, size: 16, color: AppColors.streak),
+        if (item.isFavorite) const Icon(Icons.star_rounded, size: 16, color: AppColors.streak),
       ],
     );
   }
@@ -133,10 +132,7 @@ class _MasteredPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.accentBg,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: AppColors.accentBg, borderRadius: BorderRadius.circular(8)),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         spacing: 4,

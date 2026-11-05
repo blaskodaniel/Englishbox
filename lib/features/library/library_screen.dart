@@ -30,6 +30,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   Widget build(BuildContext context) {
     final filter = ref.watch(libraryFilterProvider);
     final notifier = ref.read(libraryFilterProvider.notifier);
+    // Ha kívülről (pl. a Today csempéiről) törlik a keresést, a mező is ürüljön.
+    ref.listen(libraryFilterProvider.select((f) => f.search), (_, search) {
+      if (_search.text != search) _search.text = search;
+    });
     final itemsAsync = ref.watch(libraryItemsProvider);
     // Frissítés közben az előző lista marad látható (nincs villogás gépelés közben).
     final entries = itemsAsync.value;
@@ -112,10 +116,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 hasScrollBody: false,
                 child: filter.isEmpty
                     ? const _EmptyBox()
-                    : _NoMatches(onClear: () {
-                        _search.clear();
-                        notifier.reset();
-                      }),
+                    : _NoMatches(
+                        onClear: () {
+                          _search.clear();
+                          notifier.reset();
+                        },
+                      ),
               )
             else
               SliverPadding(
@@ -169,10 +175,7 @@ class _TypeChips extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected ? color : Colors.transparent,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: isSelected ? color : AppColors.borderStrong,
-                width: 2,
-              ),
+              border: Border.all(color: isSelected ? color : AppColors.borderStrong, width: 2),
             ),
             child: Text(
               label,
@@ -218,10 +221,7 @@ class _FilterSummary extends StatelessWidget {
     return Row(
       children: [
         const Expanded(
-          child: Text(
-            'Recently added',
-            style: TextStyle(fontSize: 13, color: AppColors.textMuted),
-          ),
+          child: Text('Recently added', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
         ),
         InkWell(
           onTap: onTap,
@@ -286,10 +286,7 @@ class _NoMatches extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       spacing: 8,
       children: [
-        const Text(
-          'Nothing matches',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
+        const Text('Nothing matches', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         TextButton(onPressed: onClear, child: const Text('Clear search and filters')),
       ],
     );

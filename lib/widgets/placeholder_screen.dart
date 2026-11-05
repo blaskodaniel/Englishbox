@@ -28,10 +28,7 @@ class PlaceholderScreen extends StatelessWidget {
               Text(title, style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 16),
               for (final entry in links.entries)
-                TextButton(
-                  onPressed: () => context.push(entry.value),
-                  child: Text(entry.key),
-                ),
+                TextButton(onPressed: () => context.push(entry.value), child: Text(entry.key)),
             ],
           ),
         ),

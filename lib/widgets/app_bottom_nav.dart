@@ -40,7 +40,9 @@ class AppBottomNav extends StatelessWidget {
             selected: currentIndex == 1,
             onTap: () => onTabSelected(1),
           ),
-          Expanded(child: Center(child: _AddButton(onPressed: onAdd))),
+          Expanded(
+            child: Center(child: _AddButton(onPressed: onAdd)),
+          ),
           _NavTab(
             icon: Icons.style_rounded,
             label: 'Review',
@@ -119,9 +121,7 @@ class _AddButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.accent,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(color: AppColors.accentShadow, offset: Offset(0, 4)),
-              ],
+              boxShadow: const [BoxShadow(color: AppColors.accentShadow, offset: Offset(0, 4))],
             ),
             child: const Icon(Icons.add_rounded, size: 30, color: AppColors.onAccent),
           ),

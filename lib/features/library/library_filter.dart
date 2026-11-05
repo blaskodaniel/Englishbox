@@ -69,13 +69,16 @@ class LibraryFilterNotifier extends Notifier<LibraryFilter> {
   void reset() => state = const LibraryFilter();
 }
 
-final libraryFilterProvider =
-    NotifierProvider<LibraryFilterNotifier, LibraryFilter>(LibraryFilterNotifier.new);
+final libraryFilterProvider = NotifierProvider<LibraryFilterNotifier, LibraryFilter>(
+  LibraryFilterNotifier.new,
+);
 
 /// A szűrt lista – automatikusan újraszámol, ha a szűrő vagy az adat változik.
 final libraryItemsProvider = StreamProvider<List<ItemListEntry>>((ref) {
   final filter = ref.watch(libraryFilterProvider);
-  return ref.watch(itemsRepositoryProvider).watchItems(
+  return ref
+      .watch(itemsRepositoryProvider)
+      .watchItems(
         type: filter.type,
         level: filter.level,
         tagId: filter.tagId,

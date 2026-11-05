@@ -10,13 +10,9 @@ class XpRepository {
 
   Future<void> award(int amount, XpReason reason, {int? itemId}) async {
     if (amount <= 0) return;
-    await _db.into(_db.xpEvents).insert(
-          XpEventsCompanion.insert(
-            amount: amount,
-            reason: reason,
-            itemId: Value(itemId),
-          ),
-        );
+    await _db
+        .into(_db.xpEvents)
+        .insert(XpEventsCompanion.insert(amount: amount, reason: reason, itemId: Value(itemId)));
   }
 
   /// Az összes eddig szerzett XP.

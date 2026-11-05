@@ -12,7 +12,6 @@ class SettingsRepository {
   /// Csak a megadott mezőket írja felül, pl.
   /// `update(AppSettingsCompanion(dailyGoal: Value(10)))`.
   Future<void> update(AppSettingsCompanion changes) async {
-    await (_db.update(_db.appSettings)..where((s) => s.id.equals(1)))
-        .write(changes);
+    await (_db.update(_db.appSettings)..where((s) => s.id.equals(1))).write(changes);
   }
 }

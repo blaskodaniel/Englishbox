@@ -42,6 +42,9 @@ enum ReviewTask { wordCard, buildSentence, freeTranslation }
 /// Miért kapott XP-t a felhasználó.
 enum XpReason { addItem, addExample, review, quest, badge }
 
+/// Napi küldetések.
+enum Quest { addItems, reviewItems, ownExample }
+
 /// Fordítási feladatoknál a válaszadás módja.
 enum AnswerMode { wordBank, keyboard, mix }
 

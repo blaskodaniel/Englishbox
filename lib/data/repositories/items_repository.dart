@@ -26,10 +26,7 @@ class ItemsRepository {
     String search = '',
   }) {
     final query = _db.select(_db.items).join([
-      leftOuterJoin(
-        _db.reviewStates,
-        _db.reviewStates.itemId.equalsExp(_db.items.id),
-      ),
+      leftOuterJoin(_db.reviewStates, _db.reviewStates.itemId.equalsExp(_db.items.id)),
     ]);
 
     if (type != null) query.where(_db.items.type.equalsValue(type));
@@ -38,16 +35,10 @@ class ItemsRepository {
     if (tagId != null) {
       final tagged = _db.selectOnly(_db.itemTags)
         ..addColumns([_db.itemTags.itemId])
-        ..where(
-          _db.itemTags.itemId.equalsExp(_db.items.id) &
-              _db.itemTags.tagId.equals(tagId),
-        );
+        ..where(_db.itemTags.itemId.equalsExp(_db.items.id) & _db.itemTags.tagId.equals(tagId));
       query.where(existsQuery(tagged));
     }
-    query.orderBy([
-      OrderingTerm.desc(_db.items.createdAt),
-      OrderingTerm.desc(_db.items.id),
-    ]);
+    query.orderBy([OrderingTerm.desc(_db.items.createdAt), OrderingTerm.desc(_db.items.id)]);
 
     var term = foldForSearch(search.trim());
     while (term.startsWith('#')) {
@@ -71,20 +62,21 @@ class ItemsRepository {
   }
 
   bool _matches(ItemListEntry entry, String term) => [
-        entry.item.english,
-        entry.item.hungarian,
-        entry.item.notes ?? '',
-        ...entry.tags,
-      ].any((field) => foldForSearch(field).contains(term));
+    entry.item.english,
+    entry.item.hungarian,
+    entry.item.notes ?? '',
+    ...entry.tags,
+  ].any((field) => foldForSearch(field).contains(term));
 
   Future<Map<int, List<String>>> _tagNamesFor(Iterable<int> itemIds) async {
     final ids = itemIds.toList();
     if (ids.isEmpty) return const {};
-    final query = _db.select(_db.itemTags).join([
-      innerJoin(_db.tags, _db.tags.id.equalsExp(_db.itemTags.tagId)),
-    ])
-      ..where(_db.itemTags.itemId.isIn(ids))
-      ..orderBy([OrderingTerm.asc(_db.tags.name)]);
+    final query =
+        _db.select(_db.itemTags).join([
+            innerJoin(_db.tags, _db.tags.id.equalsExp(_db.itemTags.tagId)),
+          ])
+          ..where(_db.itemTags.itemId.isIn(ids))
+          ..orderBy([OrderingTerm.asc(_db.tags.name)]);
     final result = <int, List<String>>{};
     for (final row in await query.get()) {
       final itemId = row.readTable(_db.itemTags).itemId;
@@ -114,20 +106,22 @@ class ItemsRepository {
     final item = await _getItem(id);
     if (item == null) return null;
 
-    final review = await (_db.select(_db.reviewStates)
-          ..where((r) => r.itemId.equals(id)))
-        .getSingleOrNull();
+    final review = await (_db.select(
+      _db.reviewStates,
+    )..where((r) => r.itemId.equals(id))).getSingleOrNull();
 
-    final tagsQuery = _db.select(_db.tags).join([
-      innerJoin(_db.itemTags, _db.itemTags.tagId.equalsExp(_db.tags.id)),
-    ])
-      ..where(_db.itemTags.itemId.equals(id))
-      ..orderBy([OrderingTerm.asc(_db.tags.name)]);
+    final tagsQuery =
+        _db.select(_db.tags).join([
+            innerJoin(_db.itemTags, _db.itemTags.tagId.equalsExp(_db.tags.id)),
+          ])
+          ..where(_db.itemTags.itemId.equals(id))
+          ..orderBy([OrderingTerm.asc(_db.tags.name)]);
 
-    final mistakes = await (_db.select(_db.ruleMistakes)
-          ..where((m) => m.ruleId.equals(id))
-          ..orderBy([(m) => OrderingTerm.asc(m.position)]))
-        .get();
+    final mistakes =
+        await (_db.select(_db.ruleMistakes)
+              ..where((m) => m.ruleId.equals(id))
+              ..orderBy([(m) => OrderingTerm.asc(m.position)]))
+            .get();
 
     return ItemDetail(
       item: item,
@@ -145,14 +139,16 @@ class ItemsRepository {
   /// Az elemrészlet élő változata: újratölt, ha bármelyik érintett tábla változik.
   Stream<ItemDetail?> watchItemDetail(int id) async* {
     yield await getItemDetail(id);
-    final changes = _db.tableUpdates(TableUpdateQuery.onAllTables([
-      _db.items,
-      _db.itemLinks,
-      _db.itemTags,
-      _db.tags,
-      _db.ruleMistakes,
-      _db.reviewStates,
-    ]));
+    final changes = _db.tableUpdates(
+      TableUpdateQuery.onAllTables([
+        _db.items,
+        _db.itemLinks,
+        _db.itemTags,
+        _db.tags,
+        _db.ruleMistakes,
+        _db.reviewStates,
+      ]),
+    );
     await for (final _ in changes) {
       yield await getItemDetail(id);
     }
@@ -163,27 +159,23 @@ class ItemsRepository {
 
   /// Elemek, amelyekre a [parentId] mutat (pl. a szó példamondatai).
   Future<List<Item>> _children(int parentId, LinkRole role) async {
-    final query = _db.select(_db.itemLinks).join([
-      innerJoin(_db.items, _db.items.id.equalsExp(_db.itemLinks.childId)),
-    ])
-      ..where(
-        _db.itemLinks.parentId.equals(parentId) &
-            _db.itemLinks.role.equalsValue(role),
-      )
-      ..orderBy([OrderingTerm.asc(_db.itemLinks.position)]);
+    final query =
+        _db.select(_db.itemLinks).join([
+            innerJoin(_db.items, _db.items.id.equalsExp(_db.itemLinks.childId)),
+          ])
+          ..where(_db.itemLinks.parentId.equals(parentId) & _db.itemLinks.role.equalsValue(role))
+          ..orderBy([OrderingTerm.asc(_db.itemLinks.position)]);
     return [for (final row in await query.get()) row.readTable(_db.items)];
   }
 
   /// Elemek, amelyek a [childId]-ra mutatnak (pl. mely szavak példája egy mondat).
   Future<List<Item>> _parents(int childId, LinkRole role) async {
-    final query = _db.select(_db.itemLinks).join([
-      innerJoin(_db.items, _db.items.id.equalsExp(_db.itemLinks.parentId)),
-    ])
-      ..where(
-        _db.itemLinks.childId.equals(childId) &
-            _db.itemLinks.role.equalsValue(role),
-      )
-      ..orderBy([OrderingTerm.asc(_db.items.english)]);
+    final query =
+        _db.select(_db.itemLinks).join([
+            innerJoin(_db.items, _db.items.id.equalsExp(_db.itemLinks.parentId)),
+          ])
+          ..where(_db.itemLinks.childId.equals(childId) & _db.itemLinks.role.equalsValue(role))
+          ..orderBy([OrderingTerm.asc(_db.items.english)]);
     return [for (final row in await query.get()) row.readTable(_db.items)];
   }
 
@@ -194,7 +186,9 @@ class ItemsRepository {
   /// Visszaadja az új elem azonosítóját.
   Future<int> createItem(NewItem draft) {
     return _db.transaction(() async {
-      final id = await _db.into(_db.items).insert(
+      final id = await _db
+          .into(_db.items)
+          .insert(
             ItemsCompanion.insert(
               type: draft.type,
               english: draft.english.trim(),
@@ -228,7 +222,9 @@ class ItemsRepository {
 
       if (draft.type == ItemType.rule) {
         for (final (index, mistake) in draft.mistakes.indexed) {
-          await _db.into(_db.ruleMistakes).insert(
+          await _db
+              .into(_db.ruleMistakes)
+              .insert(
                 RuleMistakesCompanion.insert(
                   ruleId: id,
                   wrong: mistake.wrong.trim(),
@@ -240,6 +236,100 @@ class ItemsRepository {
       }
 
       return id;
+    });
+  }
+
+  /// Meglévő elem mentése a szerkesztő képernyőről, egy tranzakcióban.
+  ///
+  /// - A típus nem változik (a [draft] típusát figyelmen kívül hagyjuk).
+  /// - Példák: a megtartottak (`existingId != null`) a megadott sorrendbe
+  ///   kerülnek, az újak mondat elemként jönnek létre, a kivettek kapcsolata
+  ///   megszűnik – maga a mondat a dobozban marad.
+  /// - Címkék és hibás példák: lecseréljük az űrlapon szereplőkre.
+  ///
+  /// Visszaadja az újonnan létrehozott példamondatok számát (az XP-hez).
+  Future<int> updateItem(int id, NewItem draft) {
+    return _db.transaction(() async {
+      final current = await _getItem(id);
+      if (current == null) throw StateError('Item $id not found');
+
+      await (_db.update(_db.items)..where((i) => i.id.equals(id))).write(
+        ItemsCompanion(
+          english: Value(draft.english.trim()),
+          hungarian: Value(draft.hungarian.trim()),
+          notes: Value(_blankToNull(draft.notes)),
+          partOfSpeech: Value(draft.partOfSpeech),
+          phraseKind: Value(draft.phraseKind),
+          ipa: Value(_blankToNull(draft.ipa)),
+          level: Value(draft.level),
+          source: Value(_blankToNull(draft.source)),
+          ruleCategory: Value(_blankToNull(draft.ruleCategory)),
+          formula: Value(draft.formula),
+          trapNote: Value(_blankToNull(draft.trapNote)),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
+      // Címkék: mindet levesszük, majd az űrlapon lévőket újra felrakjuk.
+      await (_db.delete(_db.itemTags)..where((t) => t.itemId.equals(id))).go();
+      await _attachTags(id, draft.tags);
+
+      var created = 0;
+      if (current.type != ItemType.sentence) {
+        final keptIds = {
+          for (final e in draft.examples)
+            if (e.existingId != null) e.existingId!,
+        };
+        // A kivett példák kapcsolatának törlése.
+        await (_db.delete(_db.itemLinks)..where(
+              (l) =>
+                  l.parentId.equals(id) &
+                  l.role.equalsValue(LinkRole.example) &
+                  l.childId.isNotIn(keptIds),
+            ))
+            .go();
+
+        for (final (index, example) in draft.examples.indexed) {
+          final existingId = example.existingId;
+          if (existingId != null) {
+            await (_db.update(_db.itemLinks)..where(
+                  (l) =>
+                      l.parentId.equals(id) &
+                      l.childId.equals(existingId) &
+                      l.role.equalsValue(LinkRole.example),
+                ))
+                .write(ItemLinksCompanion(position: Value(index)));
+          } else {
+            await _insertExample(
+              parentId: id,
+              example: example,
+              position: index,
+              level: draft.level,
+              source: draft.source,
+              tags: draft.tags,
+            );
+            created++;
+          }
+        }
+      }
+
+      if (current.type == ItemType.rule) {
+        await (_db.delete(_db.ruleMistakes)..where((m) => m.ruleId.equals(id))).go();
+        for (final (index, mistake) in draft.mistakes.indexed) {
+          await _db
+              .into(_db.ruleMistakes)
+              .insert(
+                RuleMistakesCompanion.insert(
+                  ruleId: id,
+                  wrong: mistake.wrong.trim(),
+                  explanation: Value(_blankToNull(mistake.explanation)),
+                  position: Value(index),
+                ),
+              );
+        }
+      }
+
+      return created;
     });
   }
 
@@ -274,12 +364,10 @@ class ItemsRepository {
 
   /// Két meglévő elem összekapcsolása (pl. szó → nyelvtani szabály).
   Future<void> link(int parentId, int childId, LinkRole role) async {
-    await _db.into(_db.itemLinks).insert(
-          ItemLinksCompanion.insert(
-            parentId: parentId,
-            childId: childId,
-            role: role,
-          ),
+    await _db
+        .into(_db.itemLinks)
+        .insert(
+          ItemLinksCompanion.insert(parentId: parentId, childId: childId, role: role),
           mode: InsertMode.insertOrIgnore,
         );
   }
@@ -308,7 +396,9 @@ class ItemsRepository {
     required String? source,
     required List<String> tags,
   }) async {
-    final sentenceId = await _db.into(_db.items).insert(
+    final sentenceId = await _db
+        .into(_db.items)
+        .insert(
           ItemsCompanion.insert(
             type: ItemType.sentence,
             english: example.english.trim(),
@@ -319,7 +409,9 @@ class ItemsRepository {
         );
     await _startReview(sentenceId);
     await _attachTags(sentenceId, tags);
-    await _db.into(_db.itemLinks).insert(
+    await _db
+        .into(_db.itemLinks)
+        .insert(
           ItemLinksCompanion.insert(
             parentId: parentId,
             childId: sentenceId,
@@ -331,19 +423,21 @@ class ItemsRepository {
   }
 
   Future<void> _startReview(int itemId) async {
-    await _db.into(_db.reviewStates).insert(
-          ReviewStatesCompanion.insert(itemId: Value(itemId), dueAt: DateTime.now()),
-        );
+    await _db
+        .into(_db.reviewStates)
+        .insert(ReviewStatesCompanion.insert(itemId: Value(itemId), dueAt: DateTime.now()));
   }
 
   Future<void> _attachTags(int itemId, List<String> names) async {
     for (final name in names.map(normalizeTag).where((n) => n.isNotEmpty).toSet()) {
-      final existing = await (_db.select(_db.tags)
-            ..where((t) => t.name.equals(name)))
-          .getSingleOrNull();
+      final existing = await (_db.select(
+        _db.tags,
+      )..where((t) => t.name.equals(name))).getSingleOrNull();
       final tagId =
           existing?.id ?? await _db.into(_db.tags).insert(TagsCompanion.insert(name: name));
-      await _db.into(_db.itemTags).insert(
+      await _db
+          .into(_db.itemTags)
+          .insert(
             ItemTagsCompanion.insert(itemId: itemId, tagId: tagId),
             mode: InsertMode.insertOrIgnore,
           );

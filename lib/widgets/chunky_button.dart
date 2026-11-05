@@ -85,11 +85,7 @@ class _ChunkyButtonState extends State<ChunkyButton> {
                     widget.label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: foreground,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: foreground),
                   ),
                 ),
                 if (widget.badge != null) ...[

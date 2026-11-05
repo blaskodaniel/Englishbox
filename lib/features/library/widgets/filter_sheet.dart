@@ -38,23 +38,23 @@ class _FilterSheet extends ConsumerWidget {
             Row(
               children: [
                 const Expanded(
-                  child: Text('Filter', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    'Filter',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
                 ),
                 if (filter.hasExtraFilters)
                   TextButton(onPressed: notifier.clearExtraFilters, child: const Text('Clear')),
               ],
             ),
-            _section(
-              'Level',
-              [
-                for (final level in CefrLevel.values)
-                  SelectChip(
-                    label: level.label,
-                    selected: filter.level == level,
-                    onTap: () => notifier.setLevel(filter.level == level ? null : level),
-                  ),
-              ],
-            ),
+            _section('Level', [
+              for (final level in CefrLevel.values)
+                SelectChip(
+                  label: level.label,
+                  selected: filter.level == level,
+                  onTap: () => notifier.setLevel(filter.level == level ? null : level),
+                ),
+            ]),
             _section(
               'Tag',
               tags.isEmpty
@@ -83,11 +83,11 @@ class _FilterSheet extends ConsumerWidget {
   }
 
   Widget _section(String title, List<Widget> chips) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
-        children: [
-          FieldLabel(title),
-          Wrap(spacing: 8, runSpacing: 8, children: chips),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    spacing: 8,
+    children: [
+      FieldLabel(title),
+      Wrap(spacing: 8, runSpacing: 8, children: chips),
+    ],
+  );
 }

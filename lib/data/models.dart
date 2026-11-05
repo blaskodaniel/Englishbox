@@ -60,7 +60,4 @@ class TagWithCount {
 
 Mastery masteryOf(ReviewState? review) => review == null
     ? Mastery.newItem
-    : Mastery.from(
-        repetitions: review.repetitions,
-        intervalDays: review.intervalDays,
-      );
+    : Mastery.from(repetitions: review.repetitions, intervalDays: review.intervalDays);

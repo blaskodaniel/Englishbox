@@ -14,6 +14,5 @@ class FormulaConverter extends TypeConverter<List<FormulaBlock>, String> {
       .toList();
 
   @override
-  String toSql(List<FormulaBlock> value) =>
-      jsonEncode(value.map((b) => b.toJson()).toList());
+  String toSql(List<FormulaBlock> value) => jsonEncode(value.map((b) => b.toJson()).toList());
 }

@@ -41,15 +41,14 @@ class ItemDetailScreen extends ConsumerWidget {
             ),
             Expanded(
               child: switch (detail) {
-                null when detailAsync.isLoading =>
-                  const Center(child: CircularProgressIndicator()),
+                null when detailAsync.isLoading => const Center(child: CircularProgressIndicator()),
                 null => const _Missing(),
                 final detail => SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                    child: detail.item.type == ItemType.rule
-                        ? RuleBody(detail: detail)
-                        : _ItemBody(detail: detail),
-                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  child: detail.item.type == ItemType.rule
+                      ? RuleBody(detail: detail)
+                      : _ItemBody(detail: detail),
+                ),
               },
             ),
           ],
@@ -193,6 +192,11 @@ class _HeaderActions extends ConsumerWidget {
           onPressed: () => ref.read(itemsRepositoryProvider).toggleFavorite(item.id),
         ),
         SquareIconButton(
+          icon: Icons.edit_outlined,
+          tooltip: 'Edit',
+          onPressed: () => context.push('/item/${item.id}/edit'),
+        ),
+        SquareIconButton(
           icon: Icons.delete_outline_rounded,
           tooltip: 'Delete',
           onPressed: () => _confirmDelete(context, ref),
@@ -217,9 +221,8 @@ class _AddExampleBar extends ConsumerWidget {
         .read(xpRepositoryProvider)
         .award(XpRules.ownExample, XpReason.addExample, itemId: sentenceId);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Example added · +${XpRules.ownExample} XP')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Example added · +${XpRules.ownExample} XP')));
     }
   }
 

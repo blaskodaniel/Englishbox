@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(dart run build_runner build -d 2>&1)"
+    ]
+  }
+}

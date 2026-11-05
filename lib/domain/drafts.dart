@@ -1,12 +1,16 @@
 import 'enums.dart';
 import 'formula.dart';
 
-/// Egy új példamondat az Add képernyőről.
+/// Egy példamondat az Add/Edit képernyőről.
 class NewExample {
-  const NewExample(this.english, {this.hungarian});
+  const NewExample(this.english, {this.hungarian, this.existingId});
 
   final String english;
   final String? hungarian;
+
+  /// Szerkesztéskor: a már elmentett mondat elem azonosítója. Ha `null`,
+  /// a mentés új mondatot hoz létre.
+  final int? existingId;
 }
 
 /// Egy hibás példa egy nyelvtani szabályhoz (pl. „If I would have…”).
@@ -17,7 +21,7 @@ class NewMistake {
   final String? explanation;
 }
 
-/// Minden, ami egy új elem mentéséhez kell – az Add képernyő ezt állítja össze.
+/// Minden, ami egy elem mentéséhez kell – az Add/Edit képernyő ezt állítja össze.
 class NewItem {
   const NewItem({
     required this.type,

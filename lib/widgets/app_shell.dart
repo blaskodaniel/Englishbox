@@ -16,10 +16,8 @@ class AppShell extends StatelessWidget {
       bottomNavigationBar: AppBottomNav(
         currentIndex: navigationShell.currentIndex,
         // Az aktív fül újbóli megnyomása visszavisz a fül kezdőképernyőjére.
-        onTabSelected: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
-        ),
+        onTabSelected: (index) =>
+            navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex),
         onAdd: () => context.push('/add'),
       ),
     );

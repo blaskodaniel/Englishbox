@@ -52,7 +52,11 @@ class RuleBody extends StatelessWidget {
               children: [
                 const Text(
                   'Hungarian trap',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.rule),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.rule,
+                  ),
                 ),
                 Text(
                   item.trapNote!,
@@ -103,17 +107,11 @@ class _RuleHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final item = detail.item;
-    final chip = [
-      'Grammar',
-      if (item.ruleCategory != null) item.ruleCategory!,
-    ].join(' · ');
+    final chip = ['Grammar', if (item.ruleCategory != null) item.ruleCategory!].join(' · ');
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.ruleBg,
-        borderRadius: BorderRadius.circular(28),
-      ),
+      decoration: BoxDecoration(color: AppColors.ruleBg, borderRadius: BorderRadius.circular(28)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 14,
@@ -265,7 +263,10 @@ class _StatTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 2,
           children: [
-            Text('$value', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
+            Text(
+              '$value',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color),
+            ),
             Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textMuted)),
           ],
         ),

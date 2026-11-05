@@ -22,6 +22,7 @@ class ExamplesEditor extends StatelessWidget {
     required this.onChanged,
     required this.newEnglish,
     required this.newSecond,
+    this.editing = false,
   });
 
   final ItemType type;
@@ -32,6 +33,9 @@ class ExamplesEditor extends StatelessWidget {
   final ValueChanged<List<ExampleDraft>> onChanged;
   final TextEditingController newEnglish;
   final TextEditingController newSecond;
+
+  /// Szerkesztő mód: más súgószöveg (a kivett példa mondatként megmarad).
+  final bool editing;
 
   bool get _isRule => type == ItemType.rule;
 
@@ -65,11 +69,7 @@ class ExamplesEditor extends StatelessWidget {
           'Example sentences · ${examples.length}',
           trailing: const Text(
             '+${XpRules.perExample} XP each',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.accent,
-            ),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.accent),
           ),
         ),
         for (final (index, example) in examples.indexed)
@@ -81,11 +81,7 @@ class ExamplesEditor extends StatelessWidget {
             onRemove: () => _remove(index),
             onSetCorrect: (value) => _setCorrect(index, value),
           ),
-        _NewExampleBox(
-          english: newEnglish,
-          second: newSecond,
-          onSubmit: _add,
-        ),
+        _NewExampleBox(english: newEnglish, second: newSecond, onSubmit: _add),
         OutlinedButton.icon(
           onPressed: _add,
           icon: const Icon(Icons.add_rounded, size: 18),
@@ -103,10 +99,13 @@ class ExamplesEditor extends StatelessWidget {
           ),
         ),
         Text(
-          _isRule
+          editing
+              ? 'New examples go to your Sentences too. '
+                    'Removed examples stay in your box as sentences.'
+              : _isRule
               ? 'Correct examples also go to your Sentences, so they show up in review.'
               : 'The ${type.label.toLowerCase()} is highlighted automatically. '
-                  'Examples also go to your Sentences for review.',
+                    'Examples also go to your Sentences for review.',
           style: const TextStyle(fontSize: 12, height: 1.5, color: AppColors.textMuted),
         ),
       ],
@@ -136,8 +135,8 @@ class _ExampleCard extends StatelessWidget {
     final borderColor = !showCorrectToggle
         ? type.softBorder
         : example.isCorrect
-            ? AppColors.sentenceSoft
-            : AppColors.wrongBorder;
+        ? AppColors.sentenceSoft
+        : AppColors.wrongBorder;
 
     final removeButton = IconButton(
       tooltip: 'Remove example',
@@ -172,10 +171,7 @@ class _ExampleCard extends StatelessWidget {
       children: [
         sentence,
         if (example.second != null)
-          Text(
-            example.second!,
-            style: const TextStyle(fontSize: 14, color: AppColors.textMuted),
-          ),
+          Text(example.second!, style: const TextStyle(fontSize: 14, color: AppColors.textMuted)),
       ],
     );
 
@@ -257,11 +253,7 @@ class _CorrectToggle extends StatelessWidget {
 }
 
 class _NewExampleBox extends StatelessWidget {
-  const _NewExampleBox({
-    required this.english,
-    required this.second,
-    required this.onSubmit,
-  });
+  const _NewExampleBox({required this.english, required this.second, required this.onSubmit});
 
   final TextEditingController english;
   final TextEditingController second;

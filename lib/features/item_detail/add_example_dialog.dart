@@ -40,9 +40,7 @@ class _AddExampleDialogState extends State<_AddExampleDialog> {
     final english = _english.text.trim();
     if (english.isEmpty) return;
     final hungarian = _hungarian.text.trim();
-    Navigator.of(context).pop(
-      NewExample(english, hungarian: hungarian.isEmpty ? null : hungarian),
-    );
+    Navigator.of(context).pop(NewExample(english, hungarian: hungarian.isEmpty ? null : hungarian));
   }
 
   @override
@@ -69,10 +67,7 @@ class _AddExampleDialogState extends State<_AddExampleDialog> {
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
         TextButton(
           onPressed: _english.text.trim().isEmpty ? null : _submit,
           child: const Text('Add'),

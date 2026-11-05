@@ -109,9 +109,7 @@ class _Pill extends StatelessWidget {
           decoration: BoxDecoration(
             color: outlined ? Colors.transparent : AppColors.surfaceAlt,
             borderRadius: BorderRadius.circular(AppRadii.chip),
-            border: outlined
-                ? Border.all(color: AppColors.borderStrong, width: 2)
-                : null,
+            border: outlined ? Border.all(color: AppColors.borderStrong, width: 2) : null,
           ),
           child: DefaultTextStyle.merge(
             style: const TextStyle(fontSize: 14),

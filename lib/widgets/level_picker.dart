@@ -82,8 +82,7 @@ class _LevelButton extends StatelessWidget {
               width: 2,
             ),
             boxShadow: [
-              if (selected)
-                const BoxShadow(color: AppColors.accentShadow, offset: Offset(0, 3)),
+              if (selected) const BoxShadow(color: AppColors.accentShadow, offset: Offset(0, 3)),
             ],
           ),
           child: Text(

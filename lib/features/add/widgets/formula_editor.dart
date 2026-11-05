@@ -26,9 +26,7 @@ class FormulaEditor extends StatelessWidget {
       spacing: 6,
       children: [
         FieldLabel(
-          blocks.isEmpty
-              ? 'Formula · tap + to add a block'
-              : 'Formula · tap a block to remove it',
+          blocks.isEmpty ? 'Formula · tap + to add a block' : 'Formula · tap a block to remove it',
         ),
         Wrap(
           spacing: 6,
@@ -99,9 +97,7 @@ class _NewBlockDialogState extends State<_NewBlockDialog> {
 
   void _submit() {
     final text = _controller.text.trim();
-    Navigator.of(context).pop(
-      text.isEmpty ? null : FormulaBlock(text, isKeyword: _isKeyword),
-    );
+    Navigator.of(context).pop(text.isEmpty ? null : FormulaBlock(text, isKeyword: _isKeyword));
   }
 
   @override
@@ -127,10 +123,7 @@ class _NewBlockDialogState extends State<_NewBlockDialog> {
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
         TextButton(onPressed: _submit, child: const Text('Add')),
       ],
     );

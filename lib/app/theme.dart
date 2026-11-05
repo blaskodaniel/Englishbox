@@ -103,11 +103,7 @@ ThemeData buildAppTheme() {
         )
         // A copyWith-ben megadott új TextStyle-okban nincs fontFamily,
         // ezért itt újra ráállítjuk a Lexendet az összes stílusra.
-        .apply(
-          fontFamily: 'Lexend',
-          bodyColor: AppColors.text,
-          displayColor: AppColors.text,
-        ),
+        .apply(fontFamily: 'Lexend', bodyColor: AppColors.text, displayColor: AppColors.text),
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.background,
       foregroundColor: AppColors.text,
@@ -138,18 +134,12 @@ ThemeData buildAppTheme() {
     dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
     dialogTheme: DialogThemeData(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.panel),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.panel)),
     ),
     snackBarTheme: const SnackBarThemeData(
       behavior: SnackBarBehavior.floating,
       backgroundColor: AppColors.surfaceAlt,
-      contentTextStyle: TextStyle(
-        fontFamily: 'Lexend',
-        fontSize: 15,
-        color: AppColors.text,
-      ),
+      contentTextStyle: TextStyle(fontFamily: 'Lexend', fontSize: 15, color: AppColors.text),
     ),
   );
 }

@@ -15,13 +15,14 @@ class FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = Text(
       text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: AppColors.textMuted,
-      ),
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textMuted),
     );
     if (trailing == null) return label;
-    return Row(children: [Expanded(child: label), trailing!]);
+    return Row(
+      children: [
+        Expanded(child: label),
+        trailing!,
+      ],
+    );
   }
 }

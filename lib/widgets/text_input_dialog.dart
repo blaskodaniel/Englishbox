@@ -11,12 +11,8 @@ Future<String?> showTextInputDialog(
 }) {
   return showDialog<String>(
     context: context,
-    builder: (context) => _TextInputDialog(
-      title: title,
-      initial: initial,
-      hint: hint,
-      confirmLabel: confirmLabel,
-    ),
+    builder: (context) =>
+        _TextInputDialog(title: title, initial: initial, hint: hint, confirmLabel: confirmLabel),
   );
 }
 
@@ -60,10 +56,7 @@ class _TextInputDialogState extends State<_TextInputDialog> {
         onSubmitted: (_) => _submit(),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
         TextButton(onPressed: _submit, child: Text(widget.confirmLabel)),
       ],
     );

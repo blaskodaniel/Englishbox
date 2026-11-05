@@ -1,4 +1,5 @@
 import 'enums.dart';
+import 'srs.dart';
 
 /// XP-szabályok a terv alapján.
 abstract final class XpRules {
@@ -8,18 +9,25 @@ abstract final class XpRules {
   /// Saját példa hozzáadása az elemrészleten.
   static const ownExample = 10;
 
+  /// Ismétlés: „Knew it / Correct” +10, „Hard / Almost” +5, „Forgot” 0.
+  /// Egy körön belül újra feltett (elfelejtett) kártyáért nem jár XP.
+  static int forReview(ReviewGrade grade) => switch (grade) {
+    ReviewGrade.good => 10,
+    ReviewGrade.hard => 5,
+    ReviewGrade.forgot => 0,
+  };
+
   /// Alap XP egy új elemért, a példák nélkül.
   static int baseForNewItem(ItemType type) => switch (type) {
-        ItemType.word => 5,
-        ItemType.phrase => 15,
-        ItemType.rule => 25,
-        ItemType.sentence => 20,
-      };
+    ItemType.word => 5,
+    ItemType.phrase => 15,
+    ItemType.rule => 25,
+    ItemType.sentence => 20,
+  };
 
   /// Egy új elem mentéséért járó XP összesen.
   /// (Terv: szó 2 példával +15, kifejezés 2 példával +25,
   /// szabály 3 példával +40, mondat +20.)
   static int forNewItem(ItemType type, {int exampleCount = 0}) =>
-      baseForNewItem(type) +
-      (type == ItemType.sentence ? 0 : perExample * exampleCount);
+      baseForNewItem(type) + (type == ItemType.sentence ? 0 : perExample * exampleCount);
 }

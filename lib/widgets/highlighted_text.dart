@@ -28,10 +28,12 @@ class HighlightedText extends StatelessWidget {
       final index = haystack.indexOf(needle, start);
       if (index < 0) break;
       if (index > start) spans.add(TextSpan(text: text.substring(start, index)));
-      spans.add(TextSpan(
-        text: text.substring(index, index + needle.length),
-        style: TextStyle(color: color, fontWeight: FontWeight.w700),
-      ));
+      spans.add(
+        TextSpan(
+          text: text.substring(index, index + needle.length),
+          style: TextStyle(color: color, fontWeight: FontWeight.w700),
+        ),
+      );
       start = index + needle.length;
     }
     if (start < text.length) spans.add(TextSpan(text: text.substring(start)));

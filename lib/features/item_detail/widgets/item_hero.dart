@@ -23,10 +23,7 @@ class ItemHero extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: type.background,
-        borderRadius: BorderRadius.circular(28),
-      ),
+      decoration: BoxDecoration(color: type.background, borderRadius: BorderRadius.circular(28)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 12,
@@ -39,8 +36,7 @@ class ItemHero extends StatelessWidget {
                 background: type.color,
                 foreground: darkOnType,
               ),
-              if (item.level != null)
-                _Badge(text: item.level!.label, borderColor: type.color),
+              if (item.level != null) _Badge(text: item.level!.label, borderColor: type.color),
             ],
           ),
           Row(
@@ -71,10 +67,7 @@ class ItemHero extends StatelessWidget {
             ],
           ),
           if (item.hungarian.isNotEmpty)
-            Text(
-              item.hungarian,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-            ),
+            Text(item.hungarian, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
           Row(
             spacing: 10,
             children: [
