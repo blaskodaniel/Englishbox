@@ -46,8 +46,9 @@ class _ReviewSessionScreenState extends ConsumerState<ReviewSessionScreen> {
       final settings = await ref.read(settingsRepositoryProvider).get();
       final due = await repo.loadDue(ref.read(effectiveReviewFocusProvider));
       final entries = selectEntries(due, widget.mode, settings.sessionLength);
+      // Példamondat csak szavakhoz, kifejezésekhez, szabályokhoz tartozik.
       final examples = await repo.firstExamples(
-        entries.where((e) => !e.isTranslatable).map((e) => e.item.id),
+        entries.where((e) => e.item.type != ItemType.sentence).map((e) => e.item.id),
       );
       final pool = await repo.sentencePool();
       final cards = buildCards(

@@ -57,6 +57,11 @@ class ReminderService {
       // az értesítéseket. Ha már döntöttél, nem kérdez újra.
       await _android?.requestNotificationsPermission();
 
+      // Pontos időzítés, ha a telefon engedi (Android 12+ külön engedély,
+      // Android 14-től friss telepítésnél alapból tiltva). Különben a rendszer
+      // „nagyjából akkor” küldi – energiatakarékos módban akár jóval később.
+      final exact = await _android?.canScheduleExactNotifications() ?? false;
+
       final now = DateTime.now();
       for (var i = 0; i < _daysAhead; i++) {
         // DateTime(év, hó, nap + i, óra, perc) – helyi idő, a hónapváltást is kezeli.
@@ -79,14 +84,25 @@ class ReminderService {
           // időzónájának nevét.
           scheduledDate: tz.TZDateTime.from(at, tz.UTC),
           notificationDetails: _details,
-          // Nem pontos ébresztő: nem kell hozzá külön „exact alarm” engedély,
-          // cserébe pár percet csúszhat.
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: exact
+              ? AndroidScheduleMode.exactAllowWhileIdle
+              : AndroidScheduleMode.inexactAllowWhileIdle,
         );
       }
     } catch (e, st) {
       // Az emlékeztető nem kritikus – hiba esetén az app működjön tovább.
       debugPrint('Reminder sync failed: $e\n$st');
+    }
+  }
+
+  /// Engedélyezve vannak-e az app értesítései a telefon beállításaiban.
+  /// (Ha egyszer letiltottad, az app már nem kérdezhet rá újra.)
+  Future<bool> notificationsEnabled() async {
+    try {
+      await _init();
+      return await _android?.areNotificationsEnabled() ?? true;
+    } catch (_) {
+      return true;
     }
   }
 }

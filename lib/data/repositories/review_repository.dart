@@ -5,20 +5,36 @@ import '../../domain/srs.dart';
 import '../db.dart';
 
 /// A Review fül „Focus” szűrője: csak egy szint és/vagy egy címke elemei.
-/// Az [excludedTypes] a beállításokból jön: ezek a típusok nem jönnek elő
-/// szókártyaként (pl. a nyelvtan kikapcsolva).
+/// Az [excludedTypes] és a [sentenceCards] a beállításokból jön: a kizárt
+/// típusok nem jönnek elő (pl. a nyelvtan kikapcsolva), a [sentenceCards]
+/// pedig azt mondja meg, hogy a mondatok szókártyaként is előjöjjenek-e.
 class ReviewFocus {
-  const ReviewFocus({this.level, this.tagId, this.tagName, this.excludedTypes = const {}});
+  const ReviewFocus({
+    this.level,
+    this.tagId,
+    this.tagName,
+    this.excludedTypes = const {},
+    this.sentenceCards = false,
+  });
 
   final CefrLevel? level;
   final int? tagId;
   final String? tagName;
   final Set<ItemType> excludedTypes;
+  final bool sentenceCards;
 
   bool get isEmpty => level == null && tagId == null;
 
-  ReviewFocus withExcludedTypes(Set<ItemType> types) =>
-      ReviewFocus(level: level, tagId: tagId, tagName: tagName, excludedTypes: types);
+  ReviewFocus withCardSettings({
+    required Set<ItemType> excludedTypes,
+    required bool sentenceCards,
+  }) => ReviewFocus(
+    level: level,
+    tagId: tagId,
+    tagName: tagName,
+    excludedTypes: excludedTypes,
+    sentenceCards: sentenceCards,
+  );
 }
 
 /// Egy esedékes elem az ütemezésével.
@@ -36,19 +52,24 @@ class DueEntry {
 
 /// Az esedékes elemek (legrégebben esedékes elöl) + mikor jön a következő.
 class DueSummary {
-  const DueSummary({this.entries = const [], this.nextDue});
+  const DueSummary({this.entries = const [], this.nextDue, this.sentenceCards = false});
 
   final List<DueEntry> entries;
 
   /// Ha most semmi sem esedékes: a legközelebbi esedékesség (ha van elem).
   final DateTime? nextDue;
 
+  /// A fordítással rendelkező mondatok is jöjjenek-e szókártyaként.
+  final bool sentenceCards;
+
   int get total => entries.length;
 
   int count(ItemType type) => entries.where((e) => e.item.type == type).length;
 
-  /// Szókártyával ismételhető: szó, kifejezés, szabály, fordítás nélküli mondat.
-  List<DueEntry> get cardEntries => entries.where((e) => !e.isTranslatable).toList();
+  /// Szókártyával ismételhető: szó, kifejezés, szabály, fordítás nélküli mondat
+  /// – és ha a beállítás engedi, minden mondat.
+  List<DueEntry> get cardEntries =>
+      entries.where((e) => sentenceCards || !e.isTranslatable).toList();
 
   /// Mondatépítéssel / fordítással ismételhető mondatok.
   List<DueEntry> get sentenceEntries => entries.where((e) => e.isTranslatable).toList();
@@ -89,13 +110,18 @@ class ReviewRepository {
       for (final row in await due.get())
         DueEntry(row.readTable(_db.items), row.readTable(_db.reviewStates)),
     ];
-    if (entries.isNotEmpty) return DueSummary(entries: entries);
+    if (entries.isNotEmpty) {
+      return DueSummary(entries: entries, sentenceCards: focus.sentenceCards);
+    }
 
     final next = _joined(focus)
       ..orderBy([OrderingTerm.asc(_db.reviewStates.dueAt)])
       ..limit(1);
     final row = await next.getSingleOrNull();
-    return DueSummary(nextDue: row?.readTable(_db.reviewStates).dueAt);
+    return DueSummary(
+      nextDue: row?.readTable(_db.reviewStates).dueAt,
+      sentenceCards: focus.sentenceCards,
+    );
   }
 
   JoinedSelectStatement<HasResultSet, dynamic> _joined(ReviewFocus focus) {

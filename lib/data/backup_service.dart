@@ -71,6 +71,8 @@ class BackupService {
           );
         }
       }
+      // Kézzel bővített mentésben hiányozhat az elemek ismétlési állapota.
+      await _db.ensureReviewStates();
       // A beállítások sora mindig legyen meg.
       final settings = await _db.select(_db.appSettings).get();
       if (settings.isEmpty) {

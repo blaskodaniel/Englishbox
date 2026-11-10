@@ -51,6 +51,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         if (cardTypes.contains(ItemType.word)) 'words',
         if (cardTypes.contains(ItemType.phrase)) 'phrases',
         if (cardTypes.contains(ItemType.rule)) 'grammar',
+        if (cardTypes.contains(ItemType.sentence)) 'sentences',
       ].join(', ').replaceFirst(RegExp(r', (?=[^,]*$)'), ' & '),
       'EN ↔ HU',
     ].join(' · ');

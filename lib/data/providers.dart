@@ -141,18 +141,26 @@ final gameModeProvider = Provider<bool>(
   (ref) => ref.watch(settingsProvider).value?.gameMode ?? true,
 );
 
-/// A beállításokban ki-be kapcsolható szókártya-típusok (a mondatok külön feladatok).
-const selectableCardTypes = [ItemType.word, ItemType.phrase, ItemType.rule];
+/// A beállításokban ki-be kapcsolható szókártya-típusok.
+///
+/// A mondat különleges: ha be van kapcsolva, a fordítással rendelkező mondatok
+/// is előjönnek szókártyaként (a mondatépítés és a fordítás mellett). Ha ki van
+/// kapcsolva, a mondatok akkor sem maradnak ki az ismétlésből – csak a saját
+/// feladataikban jönnek elő.
+const selectableCardTypes = [ItemType.word, ItemType.phrase, ItemType.rule, ItemType.sentence];
+
+/// Alapértelmezés (és a régi beállítás): mondatok nélkül.
+const defaultCardTypes = {ItemType.word, ItemType.phrase, ItemType.rule};
 
 /// „word,phrase,rule” → {word, phrase, rule}. Ismeretlen nevet kihagy; ha
-/// semmi sem marad, mindet visszaadja (üres kör ne lehessen).
+/// semmi sem marad, az alapértelmezést adja vissza (üres kör ne lehessen).
 Set<ItemType> parseCardTypes(String raw) {
   final byName = ItemType.values.asNameMap();
   final types = {
     for (final name in raw.split(','))
       if (byName[name.trim()] case final type? when selectableCardTypes.contains(type)) type,
   };
-  return types.isEmpty ? selectableCardTypes.toSet() : types;
+  return types.isEmpty ? defaultCardTypes : types;
 }
 
 String formatCardTypes(Set<ItemType> types) => [
@@ -163,7 +171,7 @@ String formatCardTypes(Set<ItemType> types) => [
 /// Mely típusok jönnek szókártyaként (betöltés közben mind).
 final cardTypesProvider = Provider<Set<ItemType>>((ref) {
   final raw = ref.watch(settingsProvider).value?.cardTypes;
-  return raw == null ? selectableCardTypes.toSet() : parseCardTypes(raw);
+  return raw == null ? defaultCardTypes : parseCardTypes(raw);
 });
 
 final progressStatsProvider = StreamProvider<ProgressStats>(

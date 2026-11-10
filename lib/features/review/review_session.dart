@@ -225,17 +225,19 @@ List<ReviewCard> buildCards(
 
   final cards = [
     for (final e in entries)
-      if (e.isTranslatable)
+      // A „Word cards” körben a mondat is szókártya (ha a beállítás beengedte).
+      if (e.isTranslatable && mode != ReviewMode.cards)
         sentenceCard(e, sentenceTask(e))
       else
         ReviewCard(
           item: e.item,
           task: ReviewTask.wordCard,
           srs: e.srs,
-          // Szavak/kifejezések néha fordítva: magyarból kell felidézni az angolt.
+          // Szavak/kifejezések/mondatok néha fordítva: magyarból kell
+          // felidézni az angolt.
           toEnglish:
               e.item.hungarian.trim().isNotEmpty &&
-              (e.item.type == ItemType.word || e.item.type == ItemType.phrase) &&
+              e.item.type != ItemType.rule &&
               rnd.nextDouble() < 0.3,
           example: examples[e.item.id],
         ),

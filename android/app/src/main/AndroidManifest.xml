@@ -2,6 +2,8 @@
     <!-- Daily reminder (flutter_local_notifications) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- On time instead of "roughly then" – used only if the phone allows it. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <application
         android:label="Englishbox"
         android:name="${applicationName}"

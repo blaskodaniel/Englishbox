@@ -55,6 +55,19 @@ class AppDatabase extends _$AppDatabase {
     beforeOpen: (details) async {
       // SQLite-ban a külső kulcsokat külön be kell kapcsolni.
       await customStatement('PRAGMA foreign_keys = ON');
+      // Egy hiányos importból maradt elemek is kerüljenek be az ismétlésbe.
+      await ensureReviewStates();
     },
+  );
+
+  /// Minden elemnek legyen ismétlési állapota: ami hiányzik (pl. egy kézzel
+  /// bővített mentésből), az most esedékesként jön létre. A Review lekérdezése
+  /// inner joinnal dolgozik, így állapot nélkül az elem sosem kerülne elő.
+  Future<void> ensureReviewStates() => customInsert(
+    'INSERT INTO review_states (item_id, due_at) '
+    'SELECT id, ? FROM items '
+    'WHERE id NOT IN (SELECT item_id FROM review_states)',
+    variables: [Variable(DateTime.now())],
+    updates: {reviewStates},
   );
 }

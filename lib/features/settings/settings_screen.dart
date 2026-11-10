@@ -2,12 +2,14 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../app/labels.dart';
 import '../../app/theme.dart';
 import '../../data/db.dart';
 import '../../data/providers.dart';
 import '../../domain/enums.dart';
+import '../../services/reminder_service.dart';
 import '../../services/speech_service.dart';
 import '../../widgets/level_picker.dart';
 import '../../widgets/screen_header.dart';
@@ -15,7 +17,12 @@ import '../../widgets/segmented_picker.dart';
 import 'backup_actions.dart';
 import 'widgets/settings_parts.dart';
 
-const _appVersion = '1.0.0';
+/// A telepített app verziója (a pubspec `version` mezőjéből, buildeléskor
+/// kerül az APK-ba) – pl. „1.1.0 (2)”.
+final _appVersionProvider = FutureProvider<String>((ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return '${info.version} (${info.buildNumber})';
+});
 
 /// Beállítások. Minden változás azonnal mentődik – nincs „Save” gomb.
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -54,7 +61,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
     if (picked == null) return;
-    await _update(AppSettingsCompanion(reminderMinutes: Value(picked.hour * 60 + picked.minute)));
+    final minutes = picked.hour * 60 + picked.minute;
+    await _update(AppSettingsCompanion(reminderMinutes: Value(minutes)));
+    await _showNextReminder(minutes);
+  }
+
+  /// Visszajelzés, hogy mikor jön a következő emlékeztető – főleg azért, mert
+  /// ha ma már tanultál, a mai kimarad (ez szándékos, de könnyű hibának hinni).
+  Future<void> _showNextReminder(int minutes) async {
+    final enabled = await ref.read(reminderServiceProvider).notificationsEnabled();
+    if (!mounted) return;
+    final String message;
+    if (!enabled) {
+      message = 'Notifications are turned off for Englishbox in your phone settings.';
+    } else {
+      final now = DateTime.now();
+      final todayAt = DateTime(now.year, now.month, now.day, minutes ~/ 60, minutes % 60);
+      final practised = ref.read(streakProvider).activeToday;
+      final time = formatMinutes(minutes);
+      if (todayAt.isAfter(now) && !practised) {
+        message = 'Next reminder: today at $time.';
+      } else if (practised) {
+        message = "You've already practised today – next reminder: tomorrow at $time.";
+      } else {
+        message = 'Next reminder: tomorrow at $time.';
+      }
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _runBusy(Future<void> Function() action) async {
@@ -174,7 +209,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               title: 'Daily reminder',
               subtitle: "Only if you haven't practised yet",
               value: s.reminderEnabled,
-              onChanged: (v) => _update(AppSettingsCompanion(reminderEnabled: Value(v))),
+              onChanged: (v) async {
+                await _update(AppSettingsCompanion(reminderEnabled: Value(v)));
+                if (v) await _showNextReminder(s.reminderMinutes);
+              },
             ),
             Opacity(
               opacity: s.reminderEnabled ? 1 : 0.5,
@@ -247,10 +285,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ],
         ),
         const SizedBox(height: 22),
-        const Text(
-          'Englishbox · version $_appVersion',
+        Text(
+          [
+            'Englishbox',
+            if (ref.watch(_appVersionProvider).value case final version?) 'version $version',
+          ].join(' · '),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
         ),
       ],
     );
@@ -319,8 +360,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-/// Words / Phrases / Grammar – több is kiválasztható, de legalább egy marad
-/// (az utolsót nem lehet kikapcsolni).
+/// Words / Phrases / Grammar / Sentences – több is kiválasztható, de legalább
+/// egy marad (az utolsót nem lehet kikapcsolni).
 class _CardTypesPicker extends StatelessWidget {
   const _CardTypesPicker({required this.selected, required this.onChanged});
 
@@ -331,6 +372,7 @@ class _CardTypesPicker extends StatelessWidget {
     ItemType.word: 'Words',
     ItemType.phrase: 'Phrases',
     ItemType.rule: 'Grammar',
+    ItemType.sentence: 'Sentences',
   };
 
   @override
@@ -367,6 +409,12 @@ class _CardTypesPicker extends StatelessWidget {
   }
 }
 
+/// 1170 → „19:30”
+String formatMinutes(int minutes) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(minutes ~/ 60)}:${two(minutes % 60)}';
+}
+
 class _TimeChip extends StatelessWidget {
   const _TimeChip({required this.minutes});
 
@@ -374,7 +422,6 @@ class _TimeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String two(int n) => n.toString().padLeft(2, '0');
     return Container(
       height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -385,7 +432,7 @@ class _TimeChip extends StatelessWidget {
         border: Border.all(color: AppColors.borderStrong, width: 2),
       ),
       child: Text(
-        '${two(minutes ~/ 60)}:${two(minutes % 60)}',
+        formatMinutes(minutes),
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
       ),
     );

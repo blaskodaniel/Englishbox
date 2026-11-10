@@ -26,14 +26,18 @@ final reviewFocusProvider = NotifierProvider<ReviewFocusNotifier, ReviewFocus>(
 );
 
 /// A Focus kiegészítve a beállításokból: a szókártyákból kikapcsolt típusok
-/// (pl. csak szavakat akarsz gyakorolni) kimaradnak az ismétlésből.
+/// (pl. csak szavakat akarsz gyakorolni) kimaradnak az ismétlésből. A mondat
+/// kivétel: az csak azt dönti el, hogy szókártyaként is előjön-e.
 final effectiveReviewFocusProvider = Provider<ReviewFocus>((ref) {
   final focus = ref.watch(reviewFocusProvider);
   final cardTypes = ref.watch(cardTypesProvider);
-  return focus.withExcludedTypes({
-    for (final type in selectableCardTypes)
-      if (!cardTypes.contains(type)) type,
-  });
+  return focus.withCardSettings(
+    excludedTypes: {
+      for (final type in selectableCardTypes)
+        if (type != ItemType.sentence && !cardTypes.contains(type)) type,
+    },
+    sentenceCards: cardTypes.contains(ItemType.sentence),
+  );
 });
 
 /// Az esedékes elemek a Focus szerint – élőben.
